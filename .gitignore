@@ -1,0 +1,15 @@
+# build outputs
+target/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.DS_Store
+
+# raw datasets (GeoLife, T-Drive, Porto, ...): public but not redistributed; see README
+data/
+
+# generated wallets, keys, ledger state and exported traces
+work/
+*.secret
+*.key
