@@ -2,7 +2,7 @@
   "devices": 4,
   "wallets": 5,
   "presentations": 10,
-  "registry_root": "1cd504a6e93101b14c1e98557688c29b3ad0e6fdd24d32c47ebd6d333929aeb2",
+  "registry_root": "880c1f4b0edeb93c224cb679a7094d9159a0443594ce96e9f6a394de90ca566f",
   "all_global_roots_equal_registry_root": true,
   "global_nullifiers_distinct": true,
   "global_linkage": {

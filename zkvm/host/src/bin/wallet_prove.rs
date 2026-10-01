@@ -14,9 +14,15 @@
 //! and a completed response never exists before its deadline, so a retry
 //! after a crash cannot release early. A resumed pending request keeps its
 //! original deadline.
+//!
+//! `--request-id` names a session of the HOLDER and must be chosen by the
+//! holder (fresh per session, reused only to resume that session). Never pass
+//! a verifier-chosen identifier: a repeated identifier returns the cached
+//! proof, so a verifier that reuses one across sessions could link them
+//! (paper, Definition 3 scopes identifiers by handle for this reason).
 use std::{error::Error, io::Write, path::Path, sync::mpsc, time::Duration};
 use host::{setup_randomized_local, load_trace_nth, wallet::Wallet, vault, anchor::Anchor, H};
-use host::registry::{write_private, Device, Registry};
+use host::registry::{sign_with_device_file, Registry};
 use methods::{ZKMOB_GUEST_ELF, ZKMOB_GUEST_ID};
 use risc0_zkvm::{default_prover, ExecutorEnv, InnerReceipt, ProverOpts, Receipt};
 use zkmob_core::{check, validate_policy, Journal, Policy, Statement, Witness};
@@ -132,17 +138,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         if path.exists() { return Err("wallet path already exists; refusing reset".into()); }
         let k: usize = get("--trace-index").map(|k| k.parse()).unwrap_or(Ok(0))?;
         let traj = load_trace_nth(get("--traces")?, n, k);
-        // Global registry (deployment unlinkability) or a local test registry.
-        let (signed, note) = if let (Ok(dev_path), Ok(reg_path)) = (get("--device"), get("--registry")) {
-            let reg: Registry = serde_json::from_slice(&std::fs::read(reg_path)?)?;
-            if !reg.verify() { return Err("registry snapshot does not verify".into()); }
-            let mut dev: Device = serde_json::from_slice(&std::fs::read(dev_path)?)?;
-            let signed = dev.sign_trace(&reg, traj)?;
-            // Persist the advanced one-time-key counter before the trace is used.
-            write_private(Path::new(dev_path), &serde_json::to_vec(&dev)?)?;
-            (signed, "initialized wallet in GLOBAL registry (ML-DSA admission)")
-        } else {
-            (setup_randomized_local(traj, 10, 20, 1000)?, "initialized randomized LOCAL registry wallet (not ML-DSA admission; root identifies the wallet)")
+        // Global registry (deployment) or an explicitly requested local test
+        // registry. A partial global configuration is an error, never a
+        // silent fallback to the weaker local mode.
+        let local = args.iter().any(|s| s == "--local-registry");
+        let (signed, note) = match (get("--device"), get("--registry"), local) {
+            (Ok(dev_path), Ok(reg_path), false) => {
+                let reg: Registry = serde_json::from_slice(&std::fs::read(reg_path)?)?;
+                if !reg.verify() { return Err("registry snapshot does not verify".into()); }
+                // Locked read / leaf allocation / durable counter update.
+                (sign_with_device_file(Path::new(dev_path), &reg, traj)?, "initialized wallet in GLOBAL registry (ML-DSA admission)")
+            }
+            (Err(_), Err(_), true) => (setup_randomized_local(traj, 10, 20, 1000)?,
+                "initialized randomized LOCAL registry wallet (test fixture: not ML-DSA admission; root identifies the wallet)"),
+            _ => return Err("use --device and --registry together, or --local-registry alone".into()),
         };
         let _wallet = if let Some(key) = &key {
             Wallet::create_protected_with_latency(path, signed, budget, latency_ms, **key, service()?)?
@@ -150,7 +159,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{note}");
         return Ok(());
     }
-    if args.iter().any(|s| ["--budget", "--traces", "--n", "--latency-ms", "--device", "--registry", "--trace-index"].contains(&s.as_str())) {
+    if args.iter().any(|s| ["--budget", "--traces", "--n", "--latency-ms", "--device", "--registry", "--trace-index", "--local-registry"].contains(&s.as_str())) {
         return Err("trace, budget and release latency are immutable; these options are init-only".into());
     }
     let policy: Policy = serde_json::from_reader(std::fs::File::open(get("--policy")?)?)?;

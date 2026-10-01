@@ -35,7 +35,7 @@ def main():
         print(label, f"{rows[-1]['wall_s']:.2f}s", flush=True)
         return p.stdout
 
-    run('initialize_randomized_disk_wallet', ['--init', '--traces', str(ROOT/'work/n1_geolife.jsonl'), '--n', '32', '--budget', '2', '--latency-ms', '0'])
+    run('initialize_randomized_disk_wallet', ['--init', '--traces', str(ROOT/'work/n1_geolife.jsonl'), '--n', '32', '--budget', '2', '--latency-ms', '0', '--local-registry'])
     v = '00'*31 + '01'
     def query(name, request):
         return ['--policy', str(private/f'{name}.json'), '--request-id', request, '--verifier', v]
@@ -49,12 +49,15 @@ def main():
     assert run('restart_budget_exhausted', query('yes', 'r3')) == b'exhausted\n'
     assert run('retry_after_exhaustion', query('no', 'r2')) == second
     run('cap_increase_rejected', query('yes', 'r3') + ['--budget', '3'], success=False)
-    run('reinitialization_rejected', ['--init', '--traces', str(ROOT/'work/n1_geolife.jsonl'), '--n', '32', '--budget', '99', '--latency-ms', '0'], success=False)
+    run('reinitialization_rejected', ['--init', '--traces', str(ROOT/'work/n1_geolife.jsonl'), '--n', '32', '--budget', '99', '--latency-ms', '0', '--local-registry'], success=False)
     data = json.loads((wallet/'state.json').read_text())
     assert data['budget'] == 2 and data['scopes'][v]['next'] == 2
     requests = data['scopes'][v]['requests']
-    assert bytes(requests['r1']['response']) == first
-    assert bytes(requests['r2']['response']) == second
+    # Wallet v4: the state commits to each receipt's SHA-256; bytes live in receipts/.
+    for rid, expected in (('r1', first), ('r2', second)):
+        digest = requests[rid]['response']
+        assert digest == hashlib.sha256(expected).hexdigest()
+        assert (wallet / 'receipts' / f'{digest}.bin').read_bytes() == expected
     result = {'cases': rows, 'all_passed': True, 'private_artifacts': str(private.relative_to(ROOT)),
               'receipt_bytes': [len(first), len(second)], 'identical_cached_retries': True,
               'receipt_sha256': [hashlib.sha256(b).hexdigest() for b in (first, second)],
