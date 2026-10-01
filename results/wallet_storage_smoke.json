@@ -1,0 +1,61 @@
+{
+  "cases": [
+    {
+      "case": "initialize_randomized_disk_wallet",
+      "exit_code": 0,
+      "wall_s": 0.20864875
+    },
+    {
+      "case": "yes_real_stark",
+      "exit_code": 0,
+      "wall_s": 24.284227917
+    },
+    {
+      "case": "restart_cached_retry",
+      "exit_code": 0,
+      "wall_s": 0.2533980000000007
+    },
+    {
+      "case": "changed_policy_retry_rejected",
+      "exit_code": 1,
+      "wall_s": 0.24177770800000076
+    },
+    {
+      "case": "no_real_stark",
+      "exit_code": 0,
+      "wall_s": 26.561009041000002
+    },
+    {
+      "case": "restart_budget_exhausted",
+      "exit_code": 0,
+      "wall_s": 0.46548854099999915
+    },
+    {
+      "case": "retry_after_exhaustion",
+      "exit_code": 0,
+      "wall_s": 0.47611954099999565
+    },
+    {
+      "case": "cap_increase_rejected",
+      "exit_code": 1,
+      "wall_s": 0.0032799590000038847
+    },
+    {
+      "case": "reinitialization_rejected",
+      "exit_code": 1,
+      "wall_s": 0.002893417000002785
+    }
+  ],
+  "all_passed": true,
+  "private_artifacts": "work/wallet-smoke-oyjwqa6k",
+  "receipt_bytes": [
+    224066,
+    224066
+  ],
+  "identical_cached_retries": true,
+  "receipt_sha256": [
+    "76fb8138971a0d906a010a364ac77af6e684a9a9b5fbc916ca122b47f682315d",
+    "b48b80dd17f27d0ff4af1df35073fa0dbed114ae9964718edc671785852cd545"
+  ],
+  "registry_scope": "randomized local registry, not ML-DSA admission"
+}
