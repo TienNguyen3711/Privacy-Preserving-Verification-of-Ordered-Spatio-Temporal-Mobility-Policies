@@ -1,0 +1,27 @@
+[package]
+name = "zkmob-stark"
+version = "0.1.0"
+edition = "2024"
+
+# Plonky3 pinned to a fixed commit for reproducibility.
+[dependencies]
+p3-air = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-baby-bear = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-challenger = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-commit = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-dft = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-field = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-fri = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-keccak = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-matrix = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-merkle-tree = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-poseidon2-air = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-symmetric = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+p3-uni-stark = { git = "https://github.com/Plonky3/Plonky3", rev = "72a69337dd89aac73d2eb52cc6df50024b735b7c" }
+rand = { version = "0.10.1", features = ["std_rng"] }
+postcard = { version = "1.1.3", features = ["alloc"] }
+serde_json = "1"
+zkmob-core = { path = "../zkvm/core" }
+
+[profile.release]
+debug = 1
