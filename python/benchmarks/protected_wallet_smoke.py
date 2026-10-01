@@ -48,7 +48,7 @@ def main():
             return p.stdout
         latency_s = 45.0  # fixed release latency, above the observed ~23-29 s proving time
         run('initialize_encrypted_wallet', ['--init', '--traces', str(ROOT/'work/n1_geolife.jsonl'), '--n', '32', '--budget', '2',
-                                            '--latency-ms', str(int(latency_s * 1000))])
+                                            '--latency-ms', str(int(latency_s * 1000)), '--local-registry'])
         shutil.copytree(private/'wallet', private/'clone')
         policy = {'steps': [{'zone': {'xmin': 0, 'xmax': 4294967295, 'ymin': 0, 'ymax': 4294967295}, 'max_gap': None}], 'avoid': None}
         (private/'policy.json').write_text(json.dumps(policy))
@@ -70,7 +70,7 @@ def main():
         assert all(latency_s <= w <= latency_s + 5.0 for w in fresh), fresh
         # Overrun: a wallet whose latency is below the proving time expires the request.
         run('initialize_short_latency_wallet', ['--init', '--traces', str(ROOT/'work/n1_geolife.jsonl'), '--n', '32',
-                                                '--budget', '2', '--latency-ms', '1000'], wallet='short')
+                                                '--budget', '2', '--latency-ms', '1000', '--local-registry'], wallet='short')
         assert run('overrun_expires_without_release', query, wallet='short') == b'expired\n'
         assert run('expired_retry_never_releases', query, wallet='short') == b'expired\n'
         other = [*query[:2], '--request-id', 'r-other', '--verifier', '00'*31+'01']

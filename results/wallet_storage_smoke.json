@@ -3,59 +3,59 @@
     {
       "case": "initialize_randomized_disk_wallet",
       "exit_code": 0,
-      "wall_s": 0.20864875
+      "wall_s": 0.6915581249999999
     },
     {
       "case": "yes_real_stark",
       "exit_code": 0,
-      "wall_s": 24.284227917
+      "wall_s": 23.244249584
     },
     {
       "case": "restart_cached_retry",
       "exit_code": 0,
-      "wall_s": 0.2533980000000007
+      "wall_s": 0.031559791999999476
     },
     {
       "case": "changed_policy_retry_rejected",
       "exit_code": 1,
-      "wall_s": 0.24177770800000076
+      "wall_s": 0.02177708299999992
     },
     {
       "case": "no_real_stark",
       "exit_code": 0,
-      "wall_s": 26.561009041000002
+      "wall_s": 24.544042917
     },
     {
       "case": "restart_budget_exhausted",
       "exit_code": 0,
-      "wall_s": 0.46548854099999915
+      "wall_s": 0.02365920799999799
     },
     {
       "case": "retry_after_exhaustion",
       "exit_code": 0,
-      "wall_s": 0.47611954099999565
+      "wall_s": 0.032952332999997225
     },
     {
       "case": "cap_increase_rejected",
       "exit_code": 1,
-      "wall_s": 0.0032799590000038847
+      "wall_s": 0.002549541000000488
     },
     {
       "case": "reinitialization_rejected",
       "exit_code": 1,
-      "wall_s": 0.002893417000002785
+      "wall_s": 0.0023759169999948426
     }
   ],
   "all_passed": true,
-  "private_artifacts": "work/wallet-smoke-oyjwqa6k",
+  "private_artifacts": "work/wallet-smoke-lawsultg",
   "receipt_bytes": [
     224066,
     224066
   ],
   "identical_cached_retries": true,
   "receipt_sha256": [
-    "76fb8138971a0d906a010a364ac77af6e684a9a9b5fbc916ca122b47f682315d",
-    "b48b80dd17f27d0ff4af1df35073fa0dbed114ae9964718edc671785852cd545"
+    "37fa76e5e84cf32831714b56c37e740029447822c400ce2a6d2e87f57e4cd448",
+    "bcfd4d4b4370f6c130bc50e309a318f4fc4fe00f9265ba10b96b51ab872eebac"
   ],
   "registry_scope": "randomized local registry, not ML-DSA admission"
 }

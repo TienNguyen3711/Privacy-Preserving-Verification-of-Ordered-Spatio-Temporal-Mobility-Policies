@@ -189,7 +189,7 @@ fn unsupported_policy_is_rejected_before_reservation() {
     std::fs::write(&traces, format!("{{\"points\": {}}}\n", serde_json::to_string(&pts).unwrap())).unwrap();
     let bin = env!("CARGO_BIN_EXE_wallet_prove");
     let init = Command::new(bin).args(["--legacy-plaintext", "--init", "--wallet"]).arg(t.wallet())
-        .args(["--traces"]).arg(&traces).args(["--n", "8", "--budget", "2", "--latency-ms", "0"]).output().unwrap();
+        .args(["--traces"]).arg(&traces).args(["--n", "8", "--budget", "2", "--latency-ms", "0", "--local-registry"]).output().unwrap();
     assert!(init.status.success(), "{}", String::from_utf8_lossy(&init.stderr));
     let zone = r#"{"zone":{"xmin":0,"xmax":4294967295,"ymin":0,"ymax":4294967295},"max_gap":null}"#;
     let policy = t.0.join("nine.json");

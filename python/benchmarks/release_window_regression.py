@@ -28,7 +28,7 @@ def main():
         wallet = p / 'wallet'
         subprocess.run([str(BINARY), '--legacy-plaintext', '--wallet', str(wallet), '--init', '--traces',
                         str(ROOT / 'work/n1_geolife.jsonl'), '--n', '32', '--budget', '2',
-                        '--latency-ms', str(LATENCY_S * 1000)], check=True, capture_output=True)
+                        '--latency-ms', str(LATENCY_S * 1000), '--local-registry'], check=True, capture_output=True)
         (p / 'policy.json').write_text(json.dumps({'steps': [{'zone': {'xmin': 0, 'xmax': 4294967295, 'ymin': 0,
                                                    'ymax': 4294967295}, 'max_gap': None}], 'avoid': None}))
         cmd = [str(BINARY), '--legacy-plaintext', '--wallet', str(wallet), '--policy', str(p / 'policy.json'),

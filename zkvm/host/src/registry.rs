@@ -51,10 +51,14 @@ fn epoch_msg(epoch: u64, root: &Digest) -> Vec<u8> {
     m
 }
 
-/// Private file write: temp file, fsync, rename, directory fsync.
+/// Private file write: unique temp file, fsync, rename, directory fsync.
+/// Concurrent writers never share a staging file; callers that update the
+/// same file must still serialise (see `sign_with_device_file`).
 pub fn write_private(path: &Path, bytes: &[u8]) -> io::Result<()> {
-    let tmp = path.with_extension("tmp");
-    let mut f = OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(&tmp)?;
+    static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let n = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let tmp = path.with_extension(format!("tmp.{}.{n}", std::process::id()));
+    let mut f = OpenOptions::new().write(true).create_new(true).mode(0o600).open(&tmp)?;
     f.write_all(bytes)?;
     f.sync_all()?;
     fs::rename(&tmp, path)?;
@@ -120,6 +124,22 @@ impl Device {
         self.next_leaf = leaf_index + 1;
         Ok(SignedTrace { traj, blind, sig, leaf_index, epoch_path, reg_index, reg_path, reg_root: reg.root })
     }
+}
+
+/// Sign one trace with the device stored at `path`, under an exclusive lock
+/// on `<path>.lock` held across read, leaf allocation and the durable write of
+/// the advanced counter. The trace is returned only after the counter is
+/// persisted, so concurrent or crashed callers never reuse a one-time key.
+/// (A restored backup of the device file can still roll the counter back;
+/// that is a device trust assumption, not protected by the wallet ledger.)
+pub fn sign_with_device_file(path: &Path, reg: &Registry, traj: Vec<Point>) -> io::Result<SignedTrace> {
+    let lock = OpenOptions::new().read(true).write(true).create(true).mode(0o600).open(path.with_extension("lock"))?;
+    lock.lock()?;
+    let mut dev: Device = serde_json::from_slice(&fs::read(path)?).map_err(|_| invalid("corrupt device file"))?;
+    let signed = dev.sign_trace(reg, traj)?;
+    write_private(path, &serde_json::to_vec(&dev).map_err(|_| invalid("encode device"))?)?;
+    drop(lock);
+    Ok(signed)
 }
 
 /// Published registry snapshot: admitted epoch roots and their Merkle root.

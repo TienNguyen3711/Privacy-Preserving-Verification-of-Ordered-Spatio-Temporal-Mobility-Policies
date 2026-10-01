@@ -70,7 +70,7 @@ def main():
                 w = d / f'w{li}-{j}'
                 subprocess.run([str(BIN), '--legacy-plaintext', '--wallet', str(w), '--init', '--traces',
                                 str(ROOT / 'work/n1_geolife.jsonl'), '--n', '32', '--budget', str(a.n + 1),
-                                '--latency-ms', '0'], check=True, capture_output=True)
+                                '--latency-ms', '0', '--local-registry'], check=True, capture_output=True)
                 wallets[level].append(w)
         # Interleave levels round by round (rotating order) so that heat and
         # drift over the run do not confound the load level.

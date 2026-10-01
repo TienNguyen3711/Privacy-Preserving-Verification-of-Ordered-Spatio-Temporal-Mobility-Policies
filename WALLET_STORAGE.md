@@ -126,13 +126,23 @@ recover with the ledger's budget, and rollback to an older snapshot fails
 closed (`results/power_loss_model.txt`). Not a physical power cut; storage
 that ignores F_FULLFSYNC is out of scope.
 
+Request IDs are holder-chosen session names: fresh per session, reused only
+to resume that session. Do not forward a verifier-chosen identifier; a cached
+retry returns the identical proof and nullifier, so a verifier reusing an
+identifier across sessions would link them (re-review F2).
+
 Global registry (`registry` binary, `host/src/registry.rs`): a manufacturer
 ML-DSA key certifies device keys; devices sign (epoch, epoch root); the
 registry checks both and publishes one Merkle root for all devices. Initialise
-with `--device dev.secret --registry registry.json [--trace-index k]`; the
-device file's one-time-key counter is persisted before the trace is used.
-Without these options the wallet uses a LOCAL registry whose root identifies
-the wallet (test fixture only).
+with `--device dev.secret --registry registry.json [--trace-index k]`. Leaf
+allocation holds an exclusive lock on `dev.lock` across read, signing and the
+durable counter write (unique staging files), so concurrent initialisations
+never reuse a one-time key (`tests/registry_cli.rs`: 16 enrolments, 8 of them
+concurrent, 16 distinct leaves). Restoring an old copy of the device file
+would roll the counter back; that is outside the wallet ledger's protection.
+The LOCAL test registry (root identifies the wallet) must be requested
+explicitly with `--local-registry`; a partial `--device`/`--registry` pair is
+rejected before anything is created.
 
 Choose the latency well above the observed proving time (23–33 s for n=32 on
 an M-series Mac; the smoke test uses 45 s). `0` (no fixed latency) is

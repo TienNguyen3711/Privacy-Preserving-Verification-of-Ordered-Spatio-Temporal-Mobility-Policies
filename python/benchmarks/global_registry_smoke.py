@@ -74,7 +74,7 @@ def main():
             (d / f'{name}.json').write_text(json.dumps(pol))
 
         def wallet(name, device, k, global_reg):
-            extra = ['--device', d / f'dev{device}.secret', '--registry', d / 'registry.json'] if global_reg else []
+            extra = ['--device', d / f'dev{device}.secret', '--registry', d / 'registry.json'] if global_reg else ['--local-registry']
             sh(BIN / 'wallet_prove', '--legacy-plaintext', '--wallet', d / name, '--init', '--traces', TRACES,
                '--n', '32', '--budget', '2', '--latency-ms', '0', '--trace-index', k, *extra)
             pres = []
