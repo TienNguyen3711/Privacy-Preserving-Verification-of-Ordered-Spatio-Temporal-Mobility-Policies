@@ -1,0 +1,98 @@
+round,level,busy_processes,concurrent_provers,outcome,ready_s
+0,idle,0,1,yes,22.7
+0,50% cores busy,9,1,yes,37.6
+0,100% cores busy,18,1,yes,55.0
+0,200% cores busy,36,1,yes,83.9
+0,two concurrent provers,0,2,yes,49.0
+1,50% cores busy,9,1,no,38.7
+1,100% cores busy,18,1,no,58.0
+1,200% cores busy,36,1,no,87.0
+1,two concurrent provers,0,2,no,48.3
+1,idle,0,1,no,23.6
+2,100% cores busy,18,1,yes,56.4
+2,200% cores busy,36,1,yes,87.8
+2,two concurrent provers,0,2,yes,48.0
+2,idle,0,1,yes,23.5
+2,50% cores busy,9,1,yes,38.2
+3,200% cores busy,36,1,no,86.6
+3,two concurrent provers,0,2,no,47.9
+3,idle,0,1,no,23.7
+3,50% cores busy,9,1,no,38.4
+3,100% cores busy,18,1,no,54.5
+4,two concurrent provers,0,2,yes,47.8
+4,idle,0,1,yes,24.0
+4,50% cores busy,9,1,yes,41.9
+4,100% cores busy,18,1,yes,57.6
+4,200% cores busy,36,1,yes,88.6
+5,idle,0,1,no,24.9
+5,50% cores busy,9,1,no,39.8
+5,100% cores busy,18,1,no,58.3
+5,200% cores busy,36,1,no,88.9
+5,two concurrent provers,0,2,no,50.1
+6,50% cores busy,9,1,yes,40.1
+6,100% cores busy,18,1,yes,58.0
+7,100% cores busy,18,1,no,52.298020625
+7,200% cores busy,36,1,no,80.258931875
+7,two concurrent provers,0,2,no,48.207972333000015
+7,idle,0,1,no,24.31730512499999
+7,50% cores busy,9,1,no,39.898782832999984
+8,200% cores busy,36,1,yes,89.869285542
+8,two concurrent provers,0,2,yes,50.15217783400004
+8,idle,0,1,yes,24.836893250000003
+8,50% cores busy,9,1,yes,39.91674291700002
+8,100% cores busy,18,1,yes,57.859992292000015
+9,two concurrent provers,0,2,no,50.28923075
+9,idle,0,1,no,25.035434958999986
+9,50% cores busy,9,1,no,40.172428833000026
+9,100% cores busy,18,1,no,57.808851041000025
+9,200% cores busy,36,1,no,89.31188012500002
+10,idle,0,1,yes,25.19932604199994
+10,50% cores busy,9,1,yes,40.079988875000026
+10,100% cores busy,18,1,yes,57.17257458400002
+10,200% cores busy,36,1,yes,89.81104879199995
+10,two concurrent provers,0,2,yes,49.84188091600004
+11,50% cores busy,9,1,no,40.293611874999996
+11,100% cores busy,18,1,no,56.41845679199999
+11,200% cores busy,36,1,no,86.953014167
+11,two concurrent provers,0,2,no,49.94228029199999
+11,idle,0,1,no,24.927863041000023
+12,100% cores busy,18,1,yes,59.072757042000035
+12,200% cores busy,36,1,yes,89.85124420900001
+12,two concurrent provers,0,2,yes,49.967585541000005
+12,idle,0,1,yes,24.665066041999978
+12,50% cores busy,9,1,yes,40.26121950000004
+13,200% cores busy,36,1,no,90.479728625
+13,two concurrent provers,0,2,no,50.065352167000015
+13,idle,0,1,no,24.818572208999967
+13,50% cores busy,9,1,no,40.36748208299991
+13,100% cores busy,18,1,no,58.29542712499995
+14,two concurrent provers,0,2,yes,50.449079708
+14,idle,0,1,yes,25.08908145800001
+14,50% cores busy,9,1,yes,40.445192958999996
+14,100% cores busy,18,1,yes,60.161617957999965
+14,200% cores busy,36,1,yes,88.73129020900001
+15,idle,0,1,no,26.236390915999998
+15,50% cores busy,9,1,no,38.808996959
+15,100% cores busy,18,1,no,57.690951375
+15,200% cores busy,36,1,no,89.19998804099998
+15,two concurrent provers,0,2,no,49.944802084
+16,50% cores busy,9,1,yes,40.70192658299999
+16,100% cores busy,18,1,yes,60.07673370799995
+16,200% cores busy,36,1,yes,89.93224033299998
+16,two concurrent provers,0,2,yes,50.34548408399996
+16,idle,0,1,yes,25.00084662500001
+17,100% cores busy,18,1,no,58.78561562499999
+17,200% cores busy,36,1,no,90.04376316700007
+17,two concurrent provers,0,2,no,50.37510370899997
+17,idle,0,1,no,25.00099108300003
+17,50% cores busy,9,1,no,40.67024362500001
+18,200% cores busy,36,1,yes,89.88245825000001
+18,two concurrent provers,0,2,yes,50.427225333000024
+18,idle,0,1,yes,24.907587041000056
+18,50% cores busy,9,1,yes,40.357117500000186
+18,100% cores busy,18,1,yes,58.289984667
+19,two concurrent provers,0,2,no,49.98495383299996
+19,idle,0,1,no,24.990069290999827
+19,50% cores busy,9,1,no,40.83407812500013
+19,100% cores busy,18,1,no,58.893533415999855
+19,200% cores busy,36,1,no,90.31218962499997

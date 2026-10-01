@@ -1,0 +1,162 @@
+{
+  "observations": [
+    {
+      "case": "initialize_encrypted_wallet",
+      "wallet": "wallet",
+      "exit_code": 0,
+      "wall_s": 0.17626383300000004,
+      "stdout_bytes": 68,
+      "ledger_events": 1,
+      "ledger_identities": 1,
+      "ledger_revision": 0,
+      "encrypted_snapshot_bytes": 64469
+    },
+    {
+      "case": "encrypted_real_stark",
+      "wallet": "wallet",
+      "exit_code": 0,
+      "wall_s": 45.047616624999996,
+      "stdout_bytes": 224066,
+      "ledger_events": 3,
+      "ledger_identities": 1,
+      "ledger_revision": 2,
+      "encrypted_snapshot_bytes": 835825
+    },
+    {
+      "case": "restart_identical_cached_receipt",
+      "wallet": "wallet",
+      "exit_code": 0,
+      "wall_s": 0.02537229200000013,
+      "stdout_bytes": 224066,
+      "ledger_events": 3,
+      "ledger_identities": 1,
+      "ledger_revision": 2,
+      "encrypted_snapshot_bytes": 835825
+    },
+    {
+      "case": "stale_clone_rejected",
+      "wallet": "clone",
+      "exit_code": 1,
+      "wall_s": 0.004233500000005108,
+      "stdout_bytes": 0,
+      "ledger_events": 3,
+      "ledger_identities": 1,
+      "ledger_revision": 2,
+      "encrypted_snapshot_bytes": 64469
+    },
+    {
+      "case": "protected_no_real_stark",
+      "wallet": "wallet",
+      "exit_code": 0,
+      "wall_s": 45.056067999999996,
+      "stdout_bytes": 224066,
+      "ledger_events": 5,
+      "ledger_identities": 1,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 1607795
+    },
+    {
+      "case": "restart_identical_no_receipt",
+      "wallet": "wallet",
+      "exit_code": 0,
+      "wall_s": 0.0290533749999895,
+      "stdout_bytes": 224066,
+      "ledger_events": 5,
+      "ledger_identities": 1,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 1607795
+    },
+    {
+      "case": "changed_policy_rejected_empty_stdout",
+      "wallet": "wallet",
+      "exit_code": 1,
+      "wall_s": 0.013156167000005325,
+      "stdout_bytes": 0,
+      "ledger_events": 5,
+      "ledger_identities": 1,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 1607795
+    },
+    {
+      "case": "budget_exhausted",
+      "wallet": "wallet",
+      "exit_code": 0,
+      "wall_s": 0.012086082999999803,
+      "stdout_bytes": 10,
+      "ledger_events": 5,
+      "ledger_identities": 1,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 1607795
+    },
+    {
+      "case": "initialize_short_latency_wallet",
+      "wallet": "short",
+      "exit_code": 0,
+      "wall_s": 0.174086250000002,
+      "stdout_bytes": 68,
+      "ledger_events": 6,
+      "ledger_identities": 2,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 64468
+    },
+    {
+      "case": "overrun_expires_without_release",
+      "wallet": "short",
+      "exit_code": 0,
+      "wall_s": 1.0259806250000025,
+      "stdout_bytes": 8,
+      "ledger_events": 8,
+      "ledger_identities": 2,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 64976
+    },
+    {
+      "case": "expired_retry_never_releases",
+      "wallet": "short",
+      "exit_code": 0,
+      "wall_s": 0.04333195799999601,
+      "stdout_bytes": 8,
+      "ledger_events": 8,
+      "ledger_identities": 2,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 64976
+    },
+    {
+      "case": "second_overrun_expires",
+      "wallet": "short",
+      "exit_code": 0,
+      "wall_s": 1.0433345420000109,
+      "stdout_bytes": 8,
+      "ledger_events": 10,
+      "ledger_identities": 2,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 65399
+    },
+    {
+      "case": "expired_slots_not_refunded",
+      "wallet": "short",
+      "exit_code": 0,
+      "wall_s": 0.006474291999992943,
+      "stdout_bytes": 10,
+      "ledger_events": 10,
+      "ledger_identities": 2,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 65399
+    },
+    {
+      "case": "offline_cached_receipt_rejected",
+      "wallet": "wallet",
+      "exit_code": 1,
+      "wall_s": 0.014038083000002644,
+      "stdout_bytes": 0,
+      "ledger_events": 10,
+      "ledger_identities": 2,
+      "ledger_revision": 4,
+      "encrypted_snapshot_bytes": 1607795
+    }
+  ],
+  "stable_identity_visible_to_ledger": true,
+  "new_answer_adds_two_commits": true,
+  "cached_retry_adds_no_commit": true,
+  "limits": "Single local run; wall times and snapshot sizes are client/storage observations, not ledger timing measurements. No mutual-information estimate or timing classifier. Ledger request timing is not captured."
+}

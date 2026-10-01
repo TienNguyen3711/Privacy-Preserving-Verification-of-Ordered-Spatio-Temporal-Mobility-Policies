@@ -1,0 +1,11 @@
+before CAS (ledger S0) | pending absent | Recovered { spent: 0 }
+before CAS (ledger S0) | pending empty | Recovered { spent: 0 }
+before CAS (ledger S0) | pending torn at 1 byte | Recovered { spent: 0 }
+before CAS (ledger S0) | pending torn at 16 bytes | Recovered { spent: 0 }
+before CAS (ledger S0) | pending torn at half | Recovered { spent: 0 }
+before CAS (ledger S0) | pending torn at len-1 | Recovered { spent: 0 }
+before CAS (ledger S0) | pending complete, uncommitted | Recovered { spent: 0 }
+after CAS (ledger S1) | rename lost: pending S1, enc S0 | Recovered { spent: 1 }
+after CAS (ledger S1) | rename lost: pending S1, enc S0, then S0 restored | FailClosed
+after CAS (ledger S1) | rename persisted: enc S1 | Recovered { spent: 1 }
+after CAS (ledger S1) | rename persisted: enc S1, then S0 restored | FailClosed
