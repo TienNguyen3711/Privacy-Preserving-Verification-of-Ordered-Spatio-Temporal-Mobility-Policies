@@ -1,0 +1,9 @@
+wrote /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_primary_seed4.csv and /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_primary_seed4.json (40 exact finite-pool settings)
+                uniform                          visit: F=7, guess=0.1094, ideal bound=0.2500
+                uniform                  visit_ordered: F=7, guess=0.1094, ideal bound=0.2500
+                uniform            visit_ordered_timed: F=7, guess=0.1094, ideal bound=0.2500
+                uniform      visit_ordered_timed_avoid: F=7, guess=0.1094, ideal bound=0.2500
+rank_skewed_sensitivity                          visit: F=7, guess=0.3493, ideal bound=1.0000
+rank_skewed_sensitivity                  visit_ordered: F=7, guess=0.3493, ideal bound=1.0000
+rank_skewed_sensitivity            visit_ordered_timed: F=7, guess=0.3493, ideal bound=1.0000
+rank_skewed_sensitivity      visit_ordered_timed_avoid: F=7, guess=0.3493, ideal bound=1.0000

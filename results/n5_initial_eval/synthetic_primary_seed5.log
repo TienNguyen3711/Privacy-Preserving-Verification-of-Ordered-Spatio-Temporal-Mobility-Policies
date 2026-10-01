@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/python/zkmob/n5_capacity.py", line 175, in <module>
+    main()
+  File "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/python/zkmob/n5_capacity.py", line 144, in main
+    rows, trees = analyse(traces, pools, args.budgets, prior, args.max_states)
+  File "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/python/zkmob/n5_capacity.py", line 90, in analyse
+    cap = optimal_disclosure(A, budget, objective="leaves", max_states=max_states)
+  File "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/python/zkmob/disclosure.py", line 159, in optimal_disclosure
+    score, leaves = solve(root, depth)
+  File "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/python/zkmob/disclosure.py", line 148, in solve
+    left, right = solve(no, depth - 1), solve(yes, depth - 1)
+  File "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/python/zkmob/disclosure.py", line 148, in solve
+    left, right = solve(no, depth - 1), solve(yes, depth - 1)
+  File "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/python/zkmob/disclosure.py", line 148, in solve
+    left, right = solve(no, depth - 1), solve(yes, depth - 1)
+  File "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/python/zkmob/disclosure.py", line 132, in solve
+    raise SearchLimitExceeded(f"exact search exceeded {limit} states")
+zkmob.disclosure.SearchLimitExceeded: exact search exceeded 200000 states
