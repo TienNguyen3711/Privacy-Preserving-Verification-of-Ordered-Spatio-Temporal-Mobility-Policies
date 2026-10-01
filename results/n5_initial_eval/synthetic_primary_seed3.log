@@ -1,0 +1,9 @@
+wrote /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/synthetic_primary_seed3.csv and /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/synthetic_primary_seed3.json (40 exact finite-pool settings)
+                uniform                          visit: F=9, guess=0.1406, ideal bound=0.2500
+                uniform                  visit_ordered: F=16, guess=0.2500, ideal bound=0.2500
+                uniform            visit_ordered_timed: F=16, guess=0.2500, ideal bound=0.2500
+                uniform      visit_ordered_timed_avoid: F=16, guess=0.2500, ideal bound=0.2500
+rank_skewed_sensitivity                          visit: F=9, guess=0.5067, ideal bound=1.0000
+rank_skewed_sensitivity                  visit_ordered: F=16, guess=0.7014, ideal bound=1.0000
+rank_skewed_sensitivity            visit_ordered_timed: F=16, guess=0.7126, ideal bound=1.0000
+rank_skewed_sensitivity      visit_ordered_timed_avoid: F=16, guess=0.7126, ideal bound=1.0000
