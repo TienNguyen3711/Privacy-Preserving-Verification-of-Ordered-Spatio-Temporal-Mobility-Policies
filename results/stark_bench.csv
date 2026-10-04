@@ -1,0 +1,17 @@
+component,n_points,outcome,rows,width,prove_ms,verify_ms,proof_bytes
+scan,128,true,256,259,14.8,1.61,255584
+scan,128,false,256,259,10.8,1.24,257389
+scan,256,true,256,259,14.3,1.20,257400
+scan,256,false,256,259,15.0,1.20,255656
+scan,512,true,512,259,15.2,1.38,284067
+scan,512,false,512,259,16.8,1.38,286166
+scan,1024,true,1024,259,31.1,1.55,316692
+scan,1024,true,1024,259,32.1,1.56,317126
+poseidon2_workload,128,,1024,298,31.9,2.12,329312
+sum_unlinked_estimate,128,,,,46.7,3.74,584896
+poseidon2_workload,256,,1024,298,29.0,2.14,325685
+sum_unlinked_estimate,256,,,,43.2,3.33,583085
+poseidon2_workload,512,,1024,298,28.0,2.15,329232
+sum_unlinked_estimate,512,,,,43.2,3.52,613299
+poseidon2_workload,1024,,2048,298,56.8,2.52,366199
+sum_unlinked_estimate,1024,,,,89.0,4.08,683325

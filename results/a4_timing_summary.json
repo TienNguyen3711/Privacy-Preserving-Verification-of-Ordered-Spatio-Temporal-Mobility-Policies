@@ -1,0 +1,41 @@
+{
+  "n_yes": 12,
+  "n_no": 12,
+  "prove_s_yes_mean": 27.2175,
+  "prove_s_yes_sd": 2.7134484098149487,
+  "prove_s_no_mean": 27.4675,
+  "prove_s_no_sd": 2.5705079971936216,
+  "mean_diff_s": -0.25,
+  "permutation_p": 0.8151092445377731,
+  "threshold_classifier_accuracy_in_sample": 0.5833333333333334,
+  "user_cycles_yes": [
+    386377,
+    386401,
+    386404,
+    386407,
+    386416,
+    386419,
+    386434,
+    386437,
+    386443,
+    386446
+  ],
+  "user_cycles_no": [
+    386301,
+    386325,
+    386328,
+    386331,
+    386340,
+    386343,
+    386358,
+    386361,
+    386367,
+    386370
+  ],
+  "padded_cycles_distinct": [
+    524288
+  ],
+  "receipt_bytes_distinct": [
+    224114
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "cores": 18,
+  "levels": [
+    {
+      "level": "idle",
+      "busy_processes": 0,
+      "concurrent_provers": 1,
+      "n": 19,
+      "median_s": 24.9,
+      "min_s": 22.7,
+      "max_s": 26.236390915999998,
+      "delta": {
+        "30": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        },
+        "45": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        },
+        "60": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        },
+        "90": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        },
+        "120": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        }
+      }
+    },
+    {
+      "level": "50% cores busy",
+      "busy_processes": 9,
+      "concurrent_provers": 1,
+      "n": 20,
+      "median_s": 40.172428833000026,
+      "min_s": 37.6,
+      "max_s": 41.9,
+      "delta": {
+        "30": {
+          "over": 20,
+          "n": 20,
+          "estimate": 1.0,
+          "upper95": 1.0
+        },
+        "45": {
+          "over": 0,
+          "n": 20,
+          "estimate": 0.0,
+          "upper95": 0.13910834066826516
+        },
+        "60": {
+          "over": 0,
+          "n": 20,
+          "estimate": 0.0,
+          "upper95": 0.13910834066826516
+        },
+        "90": {
+          "over": 0,
+          "n": 20,
+          "estimate": 0.0,
+          "upper95": 0.13910834066826516
+        },
+        "120": {
+          "over": 0,
+          "n": 20,
+          "estimate": 0.0,
+          "upper95": 0.13910834066826516
+        }
+      }
+    },
+    {
+      "level": "100% cores busy",
+      "busy_processes": 18,
+      "concurrent_provers": 1,
+      "n": 20,
+      "median_s": 58.0,
+      "min_s": 52.298020625,
+      "max_s": 60.161617957999965,
+      "delta": {
+        "30": {
+          "over": 20,
+          "n": 20,
+          "estimate": 1.0,
+          "upper95": 1.0
+        },
+        "45": {
+          "over": 20,
+          "n": 20,
+          "estimate": 1.0,
+          "upper95": 1.0
+        },
+        "60": {
+          "over": 2,
+          "n": 20,
+          "estimate": 0.1,
+          "upper95": 0.28261852488586087
+        },
+        "90": {
+          "over": 0,
+          "n": 20,
+          "estimate": 0.0,
+          "upper95": 0.13910834066826516
+        },
+        "120": {
+          "over": 0,
+          "n": 20,
+          "estimate": 0.0,
+          "upper95": 0.13910834066826516
+        }
+      }
+    },
+    {
+      "level": "200% cores busy",
+      "busy_processes": 36,
+      "concurrent_provers": 1,
+      "n": 19,
+      "median_s": 89.19998804099998,
+      "min_s": 80.258931875,
+      "max_s": 90.479728625,
+      "delta": {
+        "30": {
+          "over": 19,
+          "n": 19,
+          "estimate": 1.0,
+          "upper95": 1.0
+        },
+        "45": {
+          "over": 19,
+          "n": 19,
+          "estimate": 1.0,
+          "upper95": 1.0
+        },
+        "60": {
+          "over": 19,
+          "n": 19,
+          "estimate": 1.0,
+          "upper95": 1.0
+        },
+        "90": {
+          "over": 3,
+          "n": 19,
+          "estimate": 0.15789473684210525,
+          "upper95": 0.35942564964037305
+        },
+        "120": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        }
+      }
+    },
+    {
+      "level": "two concurrent provers",
+      "busy_processes": 0,
+      "concurrent_provers": 2,
+      "n": 19,
+      "median_s": 49.967585541000005,
+      "min_s": 47.8,
+      "max_s": 50.449079708,
+      "delta": {
+        "30": {
+          "over": 19,
+          "n": 19,
+          "estimate": 1.0,
+          "upper95": 1.0
+        },
+        "45": {
+          "over": 19,
+          "n": 19,
+          "estimate": 1.0,
+          "upper95": 1.0
+        },
+        "60": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        },
+        "90": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        },
+        "120": {
+          "over": 0,
+          "n": 19,
+          "estimate": 0.0,
+          "upper95": 0.1458685033122434
+        }
+      }
+    }
+  ]
+}

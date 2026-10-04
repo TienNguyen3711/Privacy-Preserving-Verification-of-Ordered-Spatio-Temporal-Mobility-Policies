@@ -1,0 +1,9 @@
+wrote /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_wide_long_seed4.csv and /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_wide_long_seed4.json (40 exact finite-pool settings)
+                uniform                          visit: F=5, guess=0.0781, ideal bound=0.2500
+                uniform                  visit_ordered: F=5, guess=0.0781, ideal bound=0.2500
+                uniform            visit_ordered_timed: F=5, guess=0.0781, ideal bound=0.2500
+                uniform      visit_ordered_timed_avoid: F=5, guess=0.0781, ideal bound=0.2500
+rank_skewed_sensitivity                          visit: F=5, guess=0.2768, ideal bound=1.0000
+rank_skewed_sensitivity                  visit_ordered: F=5, guess=0.2768, ideal bound=1.0000
+rank_skewed_sensitivity            visit_ordered_timed: F=5, guess=0.2768, ideal bound=1.0000
+rank_skewed_sensitivity      visit_ordered_timed_avoid: F=5, guess=0.2768, ideal bound=1.0000

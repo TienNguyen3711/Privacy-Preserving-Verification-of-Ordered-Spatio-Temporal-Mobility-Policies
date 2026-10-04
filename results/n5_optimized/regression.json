@@ -1,0 +1,7 @@
+{
+  "matched_settings": 1360,
+  "tree_replay": true,
+  "probability_tolerance": 1e-12,
+  "benchmark_repetitions": 3,
+  "timing_scope": "fresh solver, no matrix evaluation"
+}

@@ -1,0 +1,42 @@
+{
+  "devices": 4,
+  "wallets": 5,
+  "presentations": 10,
+  "registry_root": "880c1f4b0edeb93c224cb679a7094d9159a0443594ce96e9f6a394de90ca566f",
+  "all_global_roots_equal_registry_root": true,
+  "global_nullifiers_distinct": true,
+  "global_linkage": {
+    "same_trip": [
+      0.0,
+      5
+    ],
+    "same_device_other_trip": [
+      0.0,
+      4
+    ],
+    "other_device": [
+      0.0,
+      36
+    ]
+  },
+  "global_universal_fields": [
+    "reg_root"
+  ],
+  "local_control_linkage": {
+    "same_trip": [
+      1.0,
+      2
+    ],
+    "same_device_other_trip": [
+      null,
+      0
+    ],
+    "other_device": [
+      0.0,
+      4
+    ]
+  },
+  "local_control_universal_fields": [],
+  "device0_next_leaf_after_two_trips": 2,
+  "forged_admission_rejected": true
+}

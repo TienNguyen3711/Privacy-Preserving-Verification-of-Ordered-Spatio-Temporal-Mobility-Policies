@@ -1,0 +1,6 @@
+n_points,selector_constraints,scan_constraints,budgeted_total
+32,793,14299,
+64,1050,28635,
+128,1563,57307,240599
+256,2588,114651,
+512,4637,229339,
