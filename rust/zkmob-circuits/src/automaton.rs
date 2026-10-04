@@ -204,6 +204,81 @@ impl<F: PrimeField + Absorb> ConstraintSynthesizer<F> for BucketAutomatonCircuit
 /// Lets experiments price fine time resolutions without synthesizing
 /// multi-million-constraint circuits.
 pub fn b3_constraints(l: usize, k: usize) -> usize {
+    use crate::types::COORD_BITS as C;
     assert!(l >= 1);
-    (349 + k) + (l - 1) * (356 + 5 * k)
+    // per bucket: x, y range checks + two box classifications, then the DFA step
+    let classify = 2 * (C + 1) + 2 * (4 * (C + 2) + 3);
+    (classify + 5 + k) + (l - 1) * (classify + 12 + 5 * k)
+}
+
+/// DA's conservative ("sound") variant: accept only if A and B fall in
+/// buckets i < j with j - i <= k_sound = floor(gap / w) - 1. Any acceptance
+/// then implies a true gap below (k_sound + 1) w <= gap, so it never proves a
+/// false statement, at the price of more false negatives. Returns None when
+/// k_sound < 1 (no window can be certified at this width).
+pub fn sound_k(gap: u64, w: u64) -> Option<usize> {
+    let k = (gap / w) as i64 - 1;
+    (k >= 1).then_some(k as usize)
+}
+
+/// Lower bound on binding B3's buckets to the committed fixes. Any sound
+/// B3 over a fix-signed trace must, for every fix, range-check it, classify
+/// it into A and B, and place it in a bucket: t = q w + r with 0 <= r < w and
+/// q non-decreasing. This circuit does exactly that and nothing else (it
+/// omits aggregating fixes into per-bucket symbols and feeding the DFA), so
+/// its constraint count is a lower bound on the binding cost.
+#[derive(Clone)]
+pub struct BucketBindingCircuit {
+    pub traj: Vec<Point>,
+    pub zone_a: BoxZone,
+    pub zone_b: BoxZone,
+    pub w: u64,
+    pub horizon: u64,
+}
+
+fn bits_of(v: u64) -> usize { (64 - v.max(1).leading_zeros()) as usize }
+
+impl<F: PrimeField> ConstraintSynthesizer<F> for BucketBindingCircuit {
+    fn generate_constraints(self, cs: ConstraintSystemRef<F>) -> Result<(), SynthesisError> {
+        let alloc_box = |z: &BoxZone| -> Result<[FpVar<F>; 4], SynthesisError> {
+            Ok([z.xmin, z.xmax, z.ymin, z.ymax].map(|v| FpVar::new_input(cs.clone(), || Ok(F::from(v))).unwrap()))
+        };
+        let (za, zb) = (alloc_box(&self.zone_a)?, alloc_box(&self.zone_b)?);
+        let w = FpVar::constant(F::from(self.w));
+        let wm1 = FpVar::constant(F::from(self.w - 1));
+        let qbits = bits_of(self.horizon.div_ceil(self.w));
+        let rbits = bits_of(self.w - 1);
+        let mut prev_q: Option<FpVar<F>> = None;
+        for p in &self.traj {
+            let x = FpVar::new_witness(cs.clone(), || Ok(F::from(p.x)))?;
+            let y = FpVar::new_witness(cs.clone(), || Ok(F::from(p.y)))?;
+            let t = FpVar::new_witness(cs.clone(), || Ok(F::from(p.t)))?;
+            enforce_in_range(cs.clone(), &x, COORD_BITS)?;
+            enforce_in_range(cs.clone(), &y, COORD_BITS)?;
+            enforce_in_range(cs.clone(), &t, TIME_BITS)?;
+            let _a = in_box(cs.clone(), &x, &y, &za, COORD_BITS)?;
+            let _b = in_box(cs.clone(), &x, &y, &zb, COORD_BITS)?;
+            let q = FpVar::new_witness(cs.clone(), || Ok(F::from(p.t / self.w)))?;
+            let r = FpVar::new_witness(cs.clone(), || Ok(F::from(p.t % self.w)))?;
+            (&q * &w + &r).enforce_equal(&t)?;
+            enforce_in_range(cs.clone(), &r, rbits)?;
+            enforce_leq(cs.clone(), &r, &wm1, rbits)?;
+            enforce_in_range(cs.clone(), &q, qbits)?;
+            if let Some(pq) = &prev_q {
+                enforce_leq(cs.clone(), pq, &q, qbits)?;
+            }
+            prev_q = Some(q);
+        }
+        Ok(())
+    }
+}
+
+/// Exact constraint count of `BucketBindingCircuit` (checked in tests).
+pub fn binding_constraints(n: usize, w: u64, horizon: u64) -> usize {
+    use crate::types::{COORD_BITS as C, TIME_BITS as T};
+    let qb = bits_of(horizon.div_ceil(w));
+    let rb = bits_of(w - 1);
+    // x, y, t ranges; two box checks; r range and r < w; q range (t = q w + r is linear)
+    let per_fix = 2 * (C + 1) + (T + 1) + 2 * (4 * (C + 2) + 3) - 1 + (rb + 1) + (rb + 1) + (qb + 1);
+    n * per_fix + n.saturating_sub(1) * (qb + 1)
 }

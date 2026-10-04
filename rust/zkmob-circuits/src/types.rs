@@ -6,10 +6,15 @@
 //! circuits range-check every value they use so that field wrap-around cannot
 //! be abused by a malicious prover.
 
-/// Bit width of planar coordinates (metres). 2^32 m covers any country.
-pub const COORD_BITS: usize = 32;
-/// Bit width of timestamps (seconds). 2^32 s is about 136 years.
-pub const TIME_BITS: usize = 32;
+/// Bit width of planar coordinates (metres): a 65.5 km square region at
+/// 1 m resolution, the region being a public parameter (the evaluation uses
+/// +-30 km around a city origin). Every coordinate is range-checked.
+pub const COORD_BITS: usize = 16;
+/// Bit width of timestamps (seconds since the start of the reporting
+/// period): 2^17 s is about 36 h at 1 s resolution. Every used timestamp is
+/// range-checked, so the cost does not depend on the time precision within
+/// this range (review RR-16).
+pub const TIME_BITS: usize = 17;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Point {

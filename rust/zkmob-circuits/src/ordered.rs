@@ -43,8 +43,13 @@ fn bits_for(n: usize) -> usize {
 /// checks (3 * 33) and a box check (4 * 33). Per later step: index order
 /// (bits(n) + 1) and time order (33); each gap adds 33.
 pub fn ours_constraints(n: usize, s: usize, gapped: usize) -> usize {
-    s * (232 + 4 * n) + s.saturating_sub(1) * (bits_for(n) + 34) + gapped * 33
+    use crate::types::{COORD_BITS as C, TIME_BITS as T};
+    // per step: x, y, t range checks + box check + one-hot selection;
+    // per order constraint: index order + time order; per gap: one comparison
+    s * (6 * C + T + 8 + 4 * n) + s.saturating_sub(1) * (bits_for(n) + T + 2) + gapped * (T + 1)
 }
+
+pub(crate) fn bits_for_pub(n: usize) -> usize { bits_for(n) }
 
 /// Public policy parameters of the ordered circuit, in allocation order.
 pub fn policy_public_inputs<F: PrimeField>(steps: &[Step], avoid: Option<&BoxZone>) -> Vec<F> {
