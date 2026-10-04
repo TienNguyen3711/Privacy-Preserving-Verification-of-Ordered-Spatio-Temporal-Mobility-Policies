@@ -5,8 +5,8 @@
   "first_process_stdout_bytes": 0,
   "retry_exit": 0,
   "retry_stdout_bytes": 224066,
-  "retry_released_at_s_since_first_start": 60.537336125,
+  "retry_released_at_s_since_first_start": 60.099798625,
   "released_before_original_deadline": false,
   "cached_retry_identical": true,
-  "cached_retry_s": 0.250471208999997
+  "cached_retry_s": 0.032651749999999424
 }

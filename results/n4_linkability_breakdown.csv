@@ -1,2 +1,2 @@
 n_points,dev_depth,reg_depth,total,policy,commitment,lamport_verify,merkle,merkle_per_level,keygen_ms_per_onetime_key,cert_bytes,cert_verify_ms
-128,6,16,182391,1563,46897,123305,10626,483,13.50,6618,1.185
+128,6,16,182139,1311,46897,123305,10626,483,13.24,6618,1.230

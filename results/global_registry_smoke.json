@@ -1,8 +1,10 @@
 {
   "devices": 4,
-  "wallets": 5,
+  "wallets": 4,
+  "trips": 5,
   "presentations": 10,
-  "registry_root": "880c1f4b0edeb93c224cb679a7094d9159a0443594ce96e9f6a394de90ca566f",
+  "device_budget_shared_by_trips": true,
+  "registry_root": "775134b1f2c197fbbddf2d7356b48426435771717775760240e34b7c4a388ed6",
   "all_global_roots_equal_registry_root": true,
   "global_nullifiers_distinct": true,
   "global_linkage": {
