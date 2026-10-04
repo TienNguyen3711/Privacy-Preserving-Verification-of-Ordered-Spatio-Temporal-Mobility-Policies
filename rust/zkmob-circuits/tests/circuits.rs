@@ -176,6 +176,20 @@ fn cost_formulas_match_synthesis() {
 }
 
 #[test]
+fn binding_and_scan_costs_match_synthesis() {
+    use zkmob_circuits::automaton::{binding_constraints, BucketBindingCircuit};
+    let z = BoxZone { xmin: 0, xmax: 10, ymin: 0, ymax: 10 };
+    for n in [1usize, 2, 9, 40] {
+        let traj: Vec<Point> = (0..n).map(|i| Point { x: 5, y: 5, t: 37 * i as u64 }).collect();
+        for w in [5u64, 60, 600] {
+            let (m, ok) = count::<Fr, _>(BucketBindingCircuit { traj: traj.clone(), zone_a: z, zone_b: z, w, horizon: 7201 });
+            assert!(ok);
+            assert_eq!(m, binding_constraints(n, w, 7201), "binding n={n} w={w}");
+        }
+    }
+}
+
+#[test]
 fn automaton_handles_overlapping_zones() {
     // A stationary trace inside a region that is both A and B: "A then B
     // within gap" holds (two different fixes), and B3 must accept it too.

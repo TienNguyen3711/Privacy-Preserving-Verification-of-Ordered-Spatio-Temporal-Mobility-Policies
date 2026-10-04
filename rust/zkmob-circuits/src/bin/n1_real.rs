@@ -10,9 +10,17 @@
 //!                and on the "any-fix" discretisation (most favourable to
 //!                B3), with the constraint count from the closed form
 //!                `b3_constraints` (a lower bound for any-fix);
-//!   * ours     = closed form `ours_constraints`; for the first
-//!                `--check N` items the circuit is also synthesized to
-//!                confirm the count and that the honest witness satisfies it.
+//!   * ours     = closed form `ours_constraints` (selector, proves "holds"
+//!                only) and the scan circuit that proves the outcome either
+//!                way (what the budgeted relation needs); for the first
+//!                `--check N` items both circuits are synthesized to confirm
+//!                the counts and that the honest witness satisfies them;
+//!   * B3 bound = lower bound on binding B3's buckets to the committed
+//!                fixes (`BucketBindingCircuit`), plus the DFA cost;
+//!   * commit   = Poseidon hiding commitment to the n fixes (shared by both
+//!                designs when the device signs fixes);
+//!   * B3 sound = DA's conservative window k = floor(gap/w) - 1, which never
+//!                accepts a false statement.
 //!
 //! Usage (from the repo root):
 //!   cargo run --release --manifest-path rust/zkmob-circuits/Cargo.toml --bin n1_real -- \
@@ -22,7 +30,14 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
 use ark_bn254::Fr;
-use zkmob_circuits::automaton::{b3_constraints, bucket_flags_any, dfa_accepts, dfa_accepts_flags, resample};
+use std::collections::HashMap;
+use ark_r1cs_std::{alloc::AllocVar, fields::fp::FpVar};
+use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
+use zkmob_circuits::automaton::{b3_constraints, binding_constraints, bucket_flags_any, dfa_accepts, dfa_accepts_flags,
+    resample, sound_k, BucketBindingCircuit};
+use zkmob_circuits::budget::ScanPolicyCircuit;
+use zkmob_circuits::commit::enforce_commitment;
+use zkmob_circuits::types::Point;
 use zkmob_circuits::commit::Commit;
 use zkmob_circuits::io::{to_points, validate, BatchItem};
 use zkmob_circuits::ordered::{ours_constraints, OrderedPolicyCircuit};
@@ -30,6 +45,15 @@ use zkmob_circuits::synth::count;
 use zkmob_circuits::types::find_witness;
 
 const WIDTHS: [u64; 9] = [600, 300, 180, 120, 60, 30, 15, 10, 5];
+
+/// Only the hiding commitment to n fixes (to price it per n).
+struct CommitOnly(Vec<Point>);
+impl ConstraintSynthesizer<Fr> for CommitOnly {
+    fn generate_constraints(self, cs: ConstraintSystemRef<Fr>) -> Result<(), SynthesisError> {
+        let flat = self.0.iter().flat_map(|p| [p.x, p.y, p.t]).map(|v| FpVar::new_witness(cs.clone(), || Ok(Fr::from(v))).unwrap()).collect();
+        enforce_commitment(cs, Commit::Hiding(1), &self.0, flat)
+    }
+}
 
 fn arg(args: &[String], name: &str) -> Option<String> {
     args.iter().position(|a| a == name).map(|i| args[i + 1].clone())
@@ -43,7 +67,15 @@ fn main() {
 
     let mut f = File::create(&out).expect("create csv");
     writeln!(f, "id,dataset,kind,zone_half_m,gap_factor,n_points,duration_s,max_gap_s,truth,ours_constraints,\
-bucket_s,b3_steps,b3_states,b3_constraints,b3_answer,b3_any_answer").unwrap();
+ours_scan,commit,bucket_s,b3_steps,b3_states,b3_constraints,b3_binding_lb,b3_answer,b3_any_answer,b3_sound_answer").unwrap();
+
+    // Scan cost is affine in n for a fixed policy shape: fit it on n = 2, 3
+    // and confirm on the --check items by full synthesis.
+    let scan_at = |traj: Vec<Point>, steps: Vec<zkmob_circuits::types::Step>, outcome: bool| {
+        count::<Fr, _>(ScanPolicyCircuit { traj, steps, avoid: None, outcome })
+    };
+    let mut commit_cache: HashMap<usize, usize> = HashMap::new();
+    let mut scan_fit: Option<(usize, usize)> = None;
 
     let (mut items, mut mismatches, mut checked) = (0usize, 0usize, 0usize);
     for line in BufReader::new(File::open(&input).expect("open batch")).lines() {
@@ -66,7 +98,22 @@ bucket_s,b3_steps,b3_states,b3_constraints,b3_answer,b3_any_answer").unwrap();
         }
         let n = traj.len();
         let ours = ours_constraints(n, 2, 1);
+        let (slope, m2) = *scan_fit.get_or_insert_with(|| {
+            let pts = |n: usize| (0..n).map(|i| Point { x: 1, y: 1, t: i as u64 }).collect::<Vec<_>>();
+            let (m2, _) = scan_at(pts(2), steps.clone(), false);
+            let (m3, _) = scan_at(pts(3), steps.clone(), false);
+            (m3 - m2, m2)
+        });
+        let scan = m2 + slope * (n - 2);
+        let commit = *commit_cache.entry(n).or_insert_with(|| count::<Fr, _>(CommitOnly(traj.clone())).0);
         if checked < check {
+            let (ms, ok) = scan_at(traj.clone(), steps.clone(), truth);
+            assert_eq!(ms, scan, "{}: scan cost formula", it.id);
+            assert!(ok, "{}: honest scan witness must satisfy the circuit", it.id);
+            let horizon = traj.last().unwrap().t + 1;
+            let (mb, okb) = count::<Fr, _>(BucketBindingCircuit { traj: traj.clone(), zone_a: steps[0].zone, zone_b: steps[1].zone, w: 60, horizon });
+            assert_eq!(mb, binding_constraints(n, 60, horizon), "{}: binding cost formula", it.id);
+            assert!(okb, "{}: binding witness", it.id);
             if let Some(w) = wit.clone() {
                 let c = OrderedPolicyCircuit { traj: traj.clone(), steps: steps.clone(), avoid: None, witness: Some(w), commit: Commit::Off };
                 let (m, ok) = count::<Fr, _>(c);
@@ -82,9 +129,13 @@ bucket_s,b3_steps,b3_states,b3_constraints,b3_answer,b3_any_answer").unwrap();
             let sym = resample(&traj, w, horizon);
             let k = gap.div_ceil(w).max(1) as usize;
             let b3 = dfa_accepts(&sym, &steps[0].zone, &steps[1].zone, k);
-            let b3_any = dfa_accepts_flags(&bucket_flags_any(&traj, &steps[0].zone, &steps[1].zone, w, horizon), k);
-            writeln!(f, "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}", it.id, it.dataset, meta("kind"), meta("zone_half_m"),
-                meta("gap_factor"), n, horizon - 1, gap, truth, ours, w, sym.len(), k + 2, b3_constraints(sym.len(), k), b3, b3_any).unwrap();
+            let flags = bucket_flags_any(&traj, &steps[0].zone, &steps[1].zone, w, horizon);
+            let b3_any = dfa_accepts_flags(&flags, k);
+            let b3_sound = sound_k(gap, w).is_some_and(|ks| dfa_accepts_flags(&flags, ks));
+            assert!(!b3_sound || truth, "{}: the sound variant accepted a false statement", it.id);
+            writeln!(f, "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}", it.id, it.dataset, meta("kind"), meta("zone_half_m"),
+                meta("gap_factor"), n, horizon - 1, gap, truth, ours, scan, commit, w, sym.len(), k + 2, b3_constraints(sym.len(), k),
+                binding_constraints(n, w, horizon), b3, b3_any, b3_sound).unwrap();
         }
         items += 1;
         if items % 200 == 0 {
