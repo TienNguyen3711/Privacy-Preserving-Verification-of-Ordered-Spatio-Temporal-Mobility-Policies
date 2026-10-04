@@ -186,3 +186,11 @@ although its event table does not record them. These observations expose an
 explicit privacy boundary, not a privacy test that the system has passed.
 One yes/no pair cannot establish outcome distinguishability, mutual information
 or the absence of a timing side channel; that requires repeated controlled runs.
+
+## Update (3 October 2026)
+
+The wallet is now per device (version 5, see WALLET_STORAGE.md). The anchor
+identifier is derived from the device's budget tag, so all traces of a device
+share one ledger chain. `global_registry_smoke.py` now runs one wallet per
+device with `--add-trace`; result: one root, distinct nullifiers, 0 linked
+pairs among 10 presentations, and the device budget is shared by its trips.

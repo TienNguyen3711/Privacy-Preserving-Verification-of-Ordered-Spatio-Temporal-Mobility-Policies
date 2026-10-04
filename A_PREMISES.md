@@ -228,3 +228,19 @@ it does not protect a rolled-back ledger, malicious owner or re-enrolment under
 a new master key. The anchor sees stable identity and timing: exclude it from
 the verifier coalition or include these observations in A4/A5. HTTPS here is
 not an established PQ transport composition.
+
+## Update after Stage 3 review (3 October 2026)
+
+- **A5 is now proved** (paper Lemma 3, Simulation). Hybrids: (1) proofs by the
+  ZK simulator, with a reduction that samples (T, Z) and knows the witnesses;
+  (2) device nullifiers H(k_D || V || j) replaced by uniform values, cost
+  q_H / 2^kappa; (3) metadata replaced by the simulation of Prop. 1, cost
+  eps_meta + m B delta_Delta. eps_sim is the sum, and indistinguishability
+  holds jointly with (T, Z). A6 is folded into the conditions of the lemma.
+- **Scope is per device**: the secret is any function g of the device's traces,
+  and m colluding certified verifiers give 2^{mB} p_0 (A4: certified verifier
+  identities).
+- The commitment no longer enters the nullifier, so the min-entropy needed in
+  the ROM/QROM step comes from the 256-bit budget key; the 256-bit blind stays.
+- Still open: zero knowledge of the concrete STARK backend (A-STARK) and a
+  per-history bound on delta_Delta.
