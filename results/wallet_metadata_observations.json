@@ -4,155 +4,155 @@
       "case": "initialize_encrypted_wallet",
       "wallet": "wallet",
       "exit_code": 0,
-      "wall_s": 0.17664062500000002,
+      "wall_s": 0.17521624999999996,
       "stdout_bytes": 110,
       "ledger_events": 1,
       "ledger_identities": 1,
       "ledger_revision": 0,
-      "encrypted_snapshot_bytes": 64477
+      "encrypted_snapshot_bytes": 64441
     },
     {
       "case": "encrypted_real_stark",
       "wallet": "wallet",
       "exit_code": 0,
-      "wall_s": 45.057964125,
+      "wall_s": 45.060448457999996,
       "stdout_bytes": 224066,
       "ledger_events": 3,
       "ledger_identities": 1,
       "ledger_revision": 2,
-      "encrypted_snapshot_bytes": 65044
+      "encrypted_snapshot_bytes": 65023
     },
     {
       "case": "restart_identical_cached_receipt",
       "wallet": "wallet",
       "exit_code": 0,
-      "wall_s": 0.022935957999997925,
+      "wall_s": 0.022854833000003794,
       "stdout_bytes": 224066,
       "ledger_events": 3,
       "ledger_identities": 1,
       "ledger_revision": 2,
-      "encrypted_snapshot_bytes": 65044
+      "encrypted_snapshot_bytes": 65023
     },
     {
       "case": "stale_clone_rejected",
       "wallet": "clone",
       "exit_code": 1,
-      "wall_s": 0.004690707999998267,
+      "wall_s": 0.004408624999996391,
       "stdout_bytes": 0,
       "ledger_events": 3,
       "ledger_identities": 1,
       "ledger_revision": 2,
-      "encrypted_snapshot_bytes": 64477
+      "encrypted_snapshot_bytes": 64441
     },
     {
       "case": "protected_no_real_stark",
       "wallet": "wallet",
       "exit_code": 0,
-      "wall_s": 45.05936295899999,
+      "wall_s": 45.084663750000004,
       "stdout_bytes": 224066,
       "ledger_events": 5,
       "ledger_identities": 1,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 65539
+      "encrypted_snapshot_bytes": 65533
     },
     {
       "case": "restart_identical_no_receipt",
       "wallet": "wallet",
       "exit_code": 0,
-      "wall_s": 0.022712791999992987,
+      "wall_s": 0.02403612500000918,
       "stdout_bytes": 224066,
       "ledger_events": 5,
       "ledger_identities": 1,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 65539
+      "encrypted_snapshot_bytes": 65533
     },
     {
       "case": "changed_policy_rejected_empty_stdout",
       "wallet": "wallet",
       "exit_code": 1,
-      "wall_s": 0.005736666999993645,
+      "wall_s": 0.005314666000003854,
       "stdout_bytes": 0,
       "ledger_events": 5,
       "ledger_identities": 1,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 65539
+      "encrypted_snapshot_bytes": 65533
     },
     {
       "case": "budget_exhausted",
       "wallet": "wallet",
       "exit_code": 0,
-      "wall_s": 0.004388374999990674,
+      "wall_s": 0.004439125000004651,
       "stdout_bytes": 10,
       "ledger_events": 5,
       "ledger_identities": 1,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 65539
+      "encrypted_snapshot_bytes": 65533
     },
     {
       "case": "initialize_short_latency_wallet",
       "wallet": "short",
       "exit_code": 0,
-      "wall_s": 0.17387270899999407,
+      "wall_s": 0.17566083399999854,
       "stdout_bytes": 110,
       "ledger_events": 6,
       "ledger_identities": 2,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 64454
+      "encrypted_snapshot_bytes": 64526
     },
     {
       "case": "overrun_expires_without_release",
       "wallet": "short",
       "exit_code": 0,
-      "wall_s": 1.020227625000004,
+      "wall_s": 1.0227894580000054,
       "stdout_bytes": 8,
       "ledger_events": 8,
       "ledger_identities": 2,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 64959
+      "encrypted_snapshot_bytes": 65042
     },
     {
       "case": "expired_retry_never_releases",
       "wallet": "short",
       "exit_code": 0,
-      "wall_s": 0.005112457999999265,
+      "wall_s": 0.0054029160000084175,
       "stdout_bytes": 8,
       "ledger_events": 8,
       "ledger_identities": 2,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 64959
+      "encrypted_snapshot_bytes": 65042
     },
     {
       "case": "second_overrun_expires",
       "wallet": "short",
       "exit_code": 0,
-      "wall_s": 1.0201711250000045,
+      "wall_s": 1.020405666000002,
       "stdout_bytes": 8,
       "ledger_events": 10,
       "ledger_identities": 2,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 65379
+      "encrypted_snapshot_bytes": 65473
     },
     {
       "case": "expired_slots_not_refunded",
       "wallet": "short",
       "exit_code": 0,
-      "wall_s": 0.0054942499999981464,
+      "wall_s": 0.005664542000005213,
       "stdout_bytes": 10,
       "ledger_events": 10,
       "ledger_identities": 2,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 65379
+      "encrypted_snapshot_bytes": 65473
     },
     {
       "case": "offline_cached_receipt_rejected",
       "wallet": "wallet",
       "exit_code": 1,
-      "wall_s": 0.0036312080000016067,
+      "wall_s": 0.003786625000003596,
       "stdout_bytes": 0,
       "ledger_events": 10,
       "ledger_identities": 2,
       "ledger_revision": 4,
-      "encrypted_snapshot_bytes": 65539
+      "encrypted_snapshot_bytes": 65533
     }
   ],
   "stable_identity_visible_to_ledger": true,
