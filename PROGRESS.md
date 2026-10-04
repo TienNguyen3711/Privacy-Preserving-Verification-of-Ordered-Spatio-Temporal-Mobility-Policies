@@ -376,3 +376,18 @@ ledger identity, event counts 1 -> 3 -> 5 and unchanged counts on cached retries
 Local ciphertext sizes grow 64,504 -> 835,864 -> 1,607,008 bytes. Those sizes
 are storage-observer metadata, not ledger payload sizes. This is evidence of
 observable metadata, not a zero-leakage result or an outcome-timing classifier.
+
+## Stage 4 revision (3 October 2026)
+
+- Pipeline review (reviews/2026-10-03): Stage 2.5 integrity PASS; Stage 3 five-seat
+  review, Major Revision; author decisions in `stage4_author_adjudication.md`.
+- N1 fair rerun: scan at 16-bit coordinates / 17-bit time (243n - 22); B3 charged
+  a bucket-binding lower bound (~230 per fix) and a sound variant added
+  (`n1_fair.py`, `n1_fair_summary.csv`, `n1_fair_by_factor.csv`). B3 is never more
+  than 5% cheaper and then wrong on 6-55%; below 1% error 1.18-3.95x end to end.
+- Device-level budget in zkVM and Groth16 (budget key, tagged registry leaf,
+  device nullifier, wallet v5). New Groth16 counts: B2 47,965 / 48,208; unlinkable
+  (selector) 182,139; budgeted (scan + device nullifier) 215,091 at n = 128.
+- zkVM: n <= 128 at 2^19 cycles (23 s), n >= 256 at 2^20 (~52 s).
+- Paper: A5 proved (Lemma 3), Theorem 1 per device with m verifiers, supplement
+  `paper/supplement.tex`, response `reviews/2026-10-03/stage4_response_to_reviewers.md`.

@@ -193,3 +193,42 @@ helper; the existing guest rejection test and 41 Python tests also pass. The pro
 requires permission to launch its local runtime; sandboxed runs on this
 machine initially returned `Operation not permitted` and were rerun with
 execution permission. No fake/dev-mode receipts were used.
+
+## Device-level budget, wallet version 5 (3 October 2026)
+
+Review item RR-11 moved the budget from one trace to one device.
+
+- Each device holds a 32-byte budget key `k_D`. The registry leaf is
+  `registry_leaf(E, device_tag(k_D))`; the device's ML-DSA epoch signature
+  covers the tag, and `Registry::build` rejects a changed or reused tag.
+- The nullifier is `nullifier(k_D, V, j)` (tag `zkmob/null/dev`): it depends
+  on the device, verifier and slot only, so the same slot about another trip
+  gives the same nullifier.
+- One wallet per device (`WALLET_VERSION = 5`) holds `traces: Vec<SignedTrace>`
+  and one slot counter per verifier for all of them. `--add-trace FILE` adds a
+  trace of the same device (others are refused); `--trace i` selects the trace
+  a request is about, and the reservation records it. The anchor identifier is
+  `HMAC("zkmob/anchor-device/v1" || K_D)`.
+- Versions 1 to 4 are not migrated: their nullifiers are per trace.
+- Tests: `zkvm/host/tests/device_budget.rs`; Groth16: `rust/zkmob-circuits/tests/budget.rs`.
+
+## Budget periods, wallet version 6 (4 October 2026)
+
+Re-review item NEW-01: a budget that never renews gives a verifier with
+legitimate repeated checks only B answers over the device's lifetime.
+
+- The statement carries a public `period` (u32). The nullifier is
+  `nullifier(k_D, V, period, slot)` (tag `zkmob/null/dev-period`); Groth16 uses
+  `Poseidon(TAG_NULL, k_D, V, p, j)` with `p` a public input (215,334 constraints
+  at n = 128).
+- The wallet stores `period_s` (0 = one lifetime period), settable only before
+  the first request (`set_period_len`, CLI `--period-s` at `--init`). Slots are
+  counted per (verifier, period); a fresh request must name the current period of
+  the wallet's clock (`current_period`), so a verifier cannot obtain fresh slots by
+  naming a future period. A retry keeps the period of its original request
+  (`request_period`).
+- Scope keys in the state are `<verifier hex>/<period>`. Version 5 wallets are
+  rejected, not migrated.
+- Leakage over P periods with m colluding verifiers is bounded by 2^{mBP} p_0
+  (paper Theorem 3): renewal trades repeated checks for long-term leakage.
+- Test: `zkvm/host/tests/device_budget.rs::budget_renews_per_period_only_on_the_wallet_clock`.

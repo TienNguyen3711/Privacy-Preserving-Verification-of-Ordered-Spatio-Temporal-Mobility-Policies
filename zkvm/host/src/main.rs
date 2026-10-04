@@ -34,7 +34,7 @@ fn main() {
         .iter()
         .map(|&(a, b, f, slot)| {
             let pol = policy_between(&traj, (a * n as f64) as usize, (b * n as f64) as usize, f);
-            (Statement { policy: pol, reg_root: signed.reg_root, verifier, budget: 6 }, slot)
+            (Statement { policy: pol, reg_root: signed.reg_root, verifier, budget: 6, period: 0 }, slot)
         })
         .collect();
 

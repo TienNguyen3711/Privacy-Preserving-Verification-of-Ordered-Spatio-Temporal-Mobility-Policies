@@ -57,6 +57,8 @@ fn main() {
     let mut registry = Registry::new(&h, 20);
     let mut dev = Device::manufacture([1u8; 32], [2u8; 32], 6, &manufacturer);
     let id = registry.enroll(&dev.vk_bytes(), &dev.cert, &mldsa_vk(&manufacturer)).unwrap();
+    let (dev_key, tag) = dev.budget_key(&h);
+    registry.register_budget_tag(id, &tag, &dev.sign_budget_tag(&tag)).unwrap();
     let ec = dev.new_epoch(&h);
     let reg_index = registry.register_epoch(&h, id, &ec).unwrap();
     let blind: u128 = rng.r#gen();
@@ -78,8 +80,8 @@ fn main() {
     let circ = |steps: &Vec<Step>, slot: u64| {
         let outcome = scan_eval(&traj, steps, None);
         BudgetedCircuit {
-            traj: traj.clone(), steps: steps.clone(), avoid: None, outcome, blind, sig: sig.clone(), reg_index,
-            reg_path: registry.path(reg_index), reg_root: registry.root(), verifier, budget, slot,
+            traj: traj.clone(), steps: steps.clone(), avoid: None, outcome, blind, dev_key, sig: sig.clone(), reg_index,
+            reg_path: registry.path(reg_index), reg_root: registry.root(), verifier, budget, period: 0, slot,
         }
     };
 
@@ -96,7 +98,7 @@ fn main() {
     let mut first: Option<(Vec<Fr>, ark_groth16::Proof<Bn254>)> = None;
     for (q, steps) in qs.iter().enumerate() {
         let truth = find_witness(&traj, steps, None).is_some();
-        let Some(slot) = wallet.next(&c, &verifier, budget) else {
+        let Some(slot) = wallet.next(&dev_key, &verifier, 0, budget) else {
             eprintln!("query {:>2}: budget spent -> prover refuses (no information released)", q + 1);
             rows.push(format!("{},{},refused,,,,", q + 1, truth));
             continue;

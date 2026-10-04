@@ -45,6 +45,10 @@ pub const TAG_SK: u64 = 0x5eed; // legacy Poseidon PRF (benchmark only)
 pub const TAG_OTS: u64 = 0x0751;
 pub const TAG_PK: u64 = 0x07b5;
 pub const TAG_NODE: u64 = 0x40de;
+/// Device budget tag K_D = H(k_D) and registry leaf H(E || K_D) (review RR-11).
+pub const TAG_DEVKEY: u64 = 0xde4e;
+pub const TAG_REGLEAF: u64 = 0x1eaf;
+const BUDGET_CTX: &[u8] = b"zkmob/budget-tag/v1";
 
 /// Context string for manufacturer certificates (FIPS 204 `ctx`).
 pub const CERT_CTX: &[u8] = b"zkmob/device-cert/v1";
@@ -334,6 +338,19 @@ impl<F: PrimeField + Absorb> Device<F> {
         mldsa_vk(&self.mldsa).encode().to_vec()
     }
 
+    /// Budget key k_D (derived from the device master secret) and its tag.
+    pub fn budget_key(&self, h: &Hasher<F>) -> (F, F) {
+        use sha2::{Digest, Sha256};
+        let d: [u8; 32] = Sha256::new().chain_update(b"zkmob/budget-key").chain_update(self.master).finalize().into();
+        let k = F::from_le_bytes_mod_order(&d);
+        (k, h.hash(TAG_DEVKEY, &[k]))
+    }
+
+    /// ML-DSA signature on the budget tag, for one-time registration.
+    pub fn sign_budget_tag(&self, tag: &F) -> Vec<u8> {
+        mldsa_sign(&self.mldsa, &field_bytes(tag), BUDGET_CTX)
+    }
+
     /// Generate the next epoch subtree (seed = SHA-256(master || epoch)) and
     /// sign its root for the registry.
     pub fn new_epoch(&mut self, h: &Hasher<F>) -> EpochCert<F> {
@@ -403,6 +420,7 @@ pub fn mldsa_verify(vk: &MlDsaVk, msg: &[u8], ctx: &[u8], sig: &[u8]) -> bool {
 struct Enrolled {
     vk: MlDsaVk,
     last_epoch: u64,
+    budget_tag: Option<Vec<u8>>,
 }
 
 /// Public registry of epoch roots. Devices enroll once (manufacturer
@@ -429,8 +447,21 @@ impl<F: PrimeField + Absorb> Registry<F> {
             return Err("invalid manufacturer certificate".into());
         }
         let vk = mldsa_vk_decode(device_vk).ok_or("malformed device key")?;
-        self.devices.push(Enrolled { vk, last_epoch: 0 });
+        self.devices.push(Enrolled { vk, last_epoch: 0, budget_tag: None });
         Ok(self.devices.len() - 1)
+    }
+
+    /// Register device `id`'s budget tag once, signed with its ML-DSA key. A
+    /// second, different tag would give the device a fresh budget, so it is
+    /// rejected.
+    pub fn register_budget_tag(&mut self, id: usize, tag: &F, sig: &[u8]) -> Result<(), String> {
+        let dev = self.devices.get_mut(id).ok_or("unknown device")?;
+        let t = field_bytes(tag);
+        if !mldsa_verify(&dev.vk, &t, BUDGET_CTX, sig) { return Err("invalid budget-tag signature".into()); }
+        match &dev.budget_tag {
+            Some(old) if *old != t => Err("budget tag already registered".into()),
+            _ => { dev.budget_tag = Some(t); Ok(()) }
+        }
     }
 
     /// Add an epoch root of enrolled device `id`. Returns its leaf index.
@@ -443,7 +474,13 @@ impl<F: PrimeField + Absorb> Registry<F> {
             return Err("epoch replayed or out of order".into());
         }
         dev.last_epoch = ec.epoch;
-        self.leaves.push(ec.root);
+        // With a registered budget tag the leaf is H(E || K_D); devices
+        // without one keep bare epoch roots (the N4 baseline circuits).
+        let leaf = match &dev.budget_tag {
+            Some(t) => h.hash(TAG_REGLEAF, &[ec.root, F::from_be_bytes_mod_order(t)]),
+            None => ec.root,
+        };
+        self.leaves.push(leaf);
         self.tree = MerkleTree::new(h, self.depth, self.leaves.clone());
         Ok(self.leaves.len() - 1)
     }

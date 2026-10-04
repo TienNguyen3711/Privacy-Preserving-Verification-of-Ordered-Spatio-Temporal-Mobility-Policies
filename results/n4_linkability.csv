@@ -1,5 +1,5 @@
 design,signature,n_points,constraints,setup_ms,prove_ms_median,verify_ms_median,device_sign_ms,presentation_bytes,link_same_trip,link_same_device,link_diff_device,pairs_same_trip,pairs_same_device,pairs_diff_device
-B2-ECDSA,ecdsa-p256,128,48217,345,371.4,1.29,0.031,257,1.0000,1.0000,0.0000,36,108,486
-B2-MLDSA,ml-dsa-65,128,48217,328,370.9,1.24,0.201,5421,1.0000,1.0000,0.0000,36,108,486
-B2-MLDSA-hiding,ml-dsa-65,128,48460,333,374.7,1.25,0.233,5421,1.0000,1.0000,0.0000,36,108,486
-Unlinkable,lamport-poseidon+ml-dsa-cert,128,182391,1257,1308.6,1.26,13.309,128,0.0000,0.0000,0.0000,36,108,486
+B2-ECDSA,ecdsa-p256,128,47965,342,374.3,1.29,0.031,257,1.0000,1.0000,0.0000,36,108,486
+B2-MLDSA,ml-dsa-65,128,47965,329,374.2,1.26,0.212,5421,1.0000,1.0000,0.0000,36,108,486
+B2-MLDSA-hiding,ml-dsa-65,128,48208,334,378.0,1.33,0.243,5421,1.0000,1.0000,0.0000,36,108,486
+Unlinkable,lamport-poseidon+ml-dsa-cert,128,182139,1286,1347.9,1.35,13.662,128,0.0000,0.0000,0.0000,36,108,486

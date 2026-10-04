@@ -21,7 +21,7 @@ fn create(t: &Temp, b: u32) -> Wallet {
 }
 fn statement(w: &Wallet) -> Statement {
     Statement { policy: policy_between(&w.signed().traj, 1, 6, 2.0),
-        reg_root: w.signed().reg_root, verifier: sha(&[b"authenticated-test-verifier"]), budget: w.budget() }
+        reg_root: w.signed().reg_root, verifier: sha(&[b"authenticated-test-verifier"]), budget: w.budget(), period: 0 }
 }
 
 #[test]
@@ -208,8 +208,8 @@ fn older_wallet_versions_are_rejected() {
     drop(create(&t, 2));
     let path = t.wallet().join("state.json");
     let text = std::fs::read_to_string(&path).unwrap();
-    assert!(text.contains("\"version\":4"));
-    std::fs::write(&path, text.replacen("\"version\":4", "\"version\":3", 1)).unwrap();
+    assert!(text.contains("\"version\":6"));
+    std::fs::write(&path, text.replacen("\"version\":6", "\"version\":5", 1)).unwrap();
     let err = Wallet::open(&t.wallet()).err().expect("older wallets must be rejected");
     assert!(err.to_string().contains("unsupported wallet version"));
 }

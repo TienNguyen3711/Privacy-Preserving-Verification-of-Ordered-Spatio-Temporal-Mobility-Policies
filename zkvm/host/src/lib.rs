@@ -115,6 +115,8 @@ impl Epoch {
 pub struct SignedTrace {
     pub traj: Vec<Point>,
     pub blind: [u8; 32],
+    /// Device budget key k_D (same for every trace of one device).
+    pub dev_key: [u8; 32],
     pub sig: LamportSig,
     pub leaf_index: u32,
     pub epoch_path: Vec<Digest>,
@@ -128,6 +130,7 @@ impl SignedTrace {
         Witness {
             traj: self.traj.clone(),
             blind: self.blind,
+            dev_key: self.dev_key,
             sig: self.sig.clone(),
             leaf_index: self.leaf_index,
             epoch_path: self.epoch_path.clone(),
@@ -151,11 +154,12 @@ pub fn setup_fixture(traj: Vec<Point>, epoch_depth: usize, reg_depth: usize, oth
     let blind: [u8; 32] = sha(&[b"blind", &(traj.len() as u32).to_le_bytes()]);
     let c = commit::<H>(&traj, &blind);
     let (leaf_index, sig, epoch_path) = epoch.sign(&c);
+    let dev_key = sha(&[b"device-1/budget-key"]);
     let mut leaves: Vec<Digest> = (0..others).map(|i| sha(&[b"other-epoch", &(i as u32).to_le_bytes()])).collect();
     let reg_index = leaves.len() as u32;
-    leaves.push(epoch.root());
+    leaves.push(registry_leaf::<H>(&epoch.root(), &device_tag::<H>(&dev_key)));
     let reg = Tree::new(reg_depth, leaves);
-    SignedTrace { traj, blind, sig, leaf_index, epoch_path, reg_index, reg_path: reg.path(reg_index as usize), reg_root: reg.root() }
+    SignedTrace { traj, blind, dev_key, sig, leaf_index, epoch_path, reg_index, reg_path: reg.path(reg_index as usize), reg_root: reg.root() }
 }
 
 /// Fresh OS entropy for a local signed-trace setup. Unlike setup_fixture,
@@ -170,8 +174,10 @@ pub fn setup_randomized_local(traj: Vec<Point>, epoch_depth: usize, reg_depth: u
     let mut entropy = std::fs::File::open("/dev/urandom")?;
     let mut seed = [0u8; 32];
     let mut blind = [0u8; 32];
+    let mut dev_key = [0u8; 32];
     entropy.read_exact(&mut seed)?;
     entropy.read_exact(&mut blind)?;
+    entropy.read_exact(&mut dev_key)?;
     let mut epoch = Epoch::generate(seed, epoch_depth);
     let c = commit::<H>(&traj, &blind);
     let (leaf_index, sig, epoch_path) = epoch.sign(&c);
@@ -182,9 +188,9 @@ pub fn setup_randomized_local(traj: Vec<Point>, epoch_depth: usize, reg_depth: u
         leaves.push(leaf);
     }
     let reg_index = leaves.len() as u32;
-    leaves.push(epoch.root());
+    leaves.push(registry_leaf::<H>(&epoch.root(), &device_tag::<H>(&dev_key)));
     let reg = Tree::new(reg_depth, leaves);
-    Ok(SignedTrace { traj, blind, sig, leaf_index, epoch_path, reg_index,
+    Ok(SignedTrace { traj, blind, dev_key, sig, leaf_index, epoch_path, reg_index,
         reg_path: reg.path(reg_index as usize), reg_root: reg.root() })
 }
 

@@ -36,7 +36,7 @@ def linkage(pres):
     universal = {k for k in keys if len({p['view'][k] for p in pres}) == 1}
     out = {'same_trip': [0, 0], 'same_device_other_trip': [0, 0], 'other_device': [0, 0]}
     for a, b in itertools.combinations(pres, 2):
-        kind = ('same_trip' if a['wallet'] == b['wallet'] else
+        kind = ('same_trip' if a['trip'] == b['trip'] else
                 'same_device_other_trip' if a['device'] == b['device'] else 'other_device')
         linked = any(a['view'][k] == b['view'][k] for k in keys if k not in universal)
         out[kind][0] += linked
@@ -73,30 +73,41 @@ def main():
         for name, pol in policies.items():
             (d / f'{name}.json').write_text(json.dumps(pol))
 
-        def wallet(name, device, k, global_reg):
-            extra = ['--device', d / f'dev{device}.secret', '--registry', d / 'registry.json'] if global_reg else ['--local-registry']
+        def wallet(name, device, trips, global_reg):
+            # One wallet per device (v5); further trips join with --add-trace
+            # and share the device's per-verifier budget of 2 answers per trip.
+            dev = ['--device', d / f'dev{device}.secret', '--registry', d / 'registry.json']
+            extra = dev if global_reg else ['--local-registry']
             sh(BIN / 'wallet_prove', '--legacy-plaintext', '--wallet', d / name, '--init', '--traces', TRACES,
-               '--n', '32', '--budget', '2', '--latency-ms', '0', '--trace-index', k, *extra)
+               '--n', '32', '--budget', str(2 * len(trips)), '--latency-ms', '0', '--trace-index', trips[0], *extra)
+            for k in trips[1:]:
+                sh(BIN / 'wallet_prove', '--legacy-plaintext', '--wallet', d / name, '--add-trace', '--traces', TRACES,
+                   '--n', '32', '--trace-index', k, *dev)
             pres = []
-            for pol in ('yes', 'no'):
-                out = sh(BIN / 'wallet_prove', '--legacy-plaintext', '--wallet', d / name, '--policy',
-                         d / f'{pol}.json', '--request-id', pol, '--verifier', VERIFIER)
-                (d / f'{name}-{pol}.bin').write_bytes(out)
-                view = json.loads(sh(reg, 'inspect-receipt', '--receipt', d / f'{name}-{pol}.bin'))
-                assert view['outcome'] == (pol == 'yes')
-                pres.append({'wallet': name, 'device': device, 'view': view})
+            for i in range(len(trips)):
+                for pol in ('yes', 'no'):
+                    out = sh(BIN / 'wallet_prove', '--legacy-plaintext', '--wallet', d / name, '--policy',
+                             d / f'{pol}.json', '--request-id', f'{pol}-{i}', '--verifier', VERIFIER, '--trace', i)
+                    (d / f'{name}-{i}-{pol}.bin').write_bytes(out)
+                    view = json.loads(sh(reg, 'inspect-receipt', '--receipt', d / f'{name}-{i}-{pol}.bin'))
+                    assert view['outcome'] == (pol == 'yes')
+                    pres.append({'wallet': name, 'trip': f'{name}/{i}', 'device': device, 'view': view})
+            # the device budget is shared by its trips: one more answer is refused
+            assert sh(BIN / 'wallet_prove', '--legacy-plaintext', '--wallet', d / name, '--policy', d / 'yes.json',
+                      '--request-id', 'extra', '--verifier', VERIFIER, '--trace', 0) == b'exhausted\n'
             return pres
 
-        # Device 0 records two trips; devices 1-3 one trip each.
-        plan = [('g0a', 0, 0), ('g0b', 0, 1), ('g1', 1, 2), ('g2', 2, 3), ('g3', 3, 4)]
+        # Device 0 records two trips (one wallet); devices 1-3 one trip each.
+        plan = [('g0', 0, [0, 1]), ('g1', 1, [2]), ('g2', 2, [3]), ('g3', 3, [4])]
         global_pres = [p for w in plan for p in wallet(*w, True)]
-        local_pres = [p for w in [('l0', 0, 0), ('l1', 1, 1)] for p in wallet(*w, False)]
+        local_pres = [p for w in [('l0', 0, [0]), ('l1', 1, [1])] for p in wallet(*w, False)]
         dev0 = json.loads((d / 'dev0.secret').read_text())
 
         g_link, g_universal = linkage(global_pres)
         l_link, l_universal = linkage(local_pres)
         result = {
-            'devices': 4, 'wallets': len(plan), 'presentations': len(global_pres),
+            'devices': 4, 'wallets': len(plan), 'trips': 5, 'presentations': len(global_pres),
+            'device_budget_shared_by_trips': True,
             'registry_root': built['root'],
             'all_global_roots_equal_registry_root': all(p['view']['reg_root'] == built['root'] for p in global_pres),
             'global_nullifiers_distinct': len({p['view']['nullifier'] for p in global_pres}) == len(global_pres),

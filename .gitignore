@@ -13,3 +13,6 @@ data/
 work/
 *.secret
 *.key
+
+# local backups of superseded result files
+results/*.before_*

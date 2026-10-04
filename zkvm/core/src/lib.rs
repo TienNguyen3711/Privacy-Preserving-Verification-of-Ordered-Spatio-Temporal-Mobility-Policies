@@ -5,11 +5,11 @@
 //!   C      = H("zkmob/commit" || r || T)                  hiding commitment
 //!   leaf   = LamportPK(C, sig)   (Lamport over SHA-256, 256 message bits)
 //!   E      = MerkleRoot(leaf, epoch path)                 epoch subtree root
-//!   R      = MerkleRoot(E, registry path)                 public registry root
+//!   R      = MerkleRoot(H(E || H(k_D)), registry path)    public registry root
 //!   b      = Policy(T)          (one-pass scan, proves yes or no exactly)
-//!   j < B,  N = H("zkmob/null" || C || V || j)            budget nullifier
+//!   j < B,  N = H("zkmob/null/dev-period" || k_D || V || p || j)  device nullifier
 //!
-//! Public (journal): policy, b, R, V, B, N. Everything else is private.
+//! Public (journal): policy, b, R, V, B, p, N. Everything else is private.
 //! The hash is a parameter (`Hasher`) so host and guest share this code.
 
 #![no_std]
@@ -73,6 +73,10 @@ pub struct Witness {
     /// 256-bit blind: a 128-bit blind gives only about q*2^-64 against quantum
     /// hash queries in the unlinkability hybrid (paper, App. D).
     pub blind: [u8; 32],
+    /// Device budget key k_D (secret). Its tag H(k_D) is bound into the
+    /// device's registry leaf, and nullifiers are H(k_D || V || slot), so all
+    /// traces of one device share one budget per verifier (review RR-11).
+    pub dev_key: [u8; 32],
     pub sig: LamportSig,
     pub leaf_index: u32,
     pub epoch_path: Vec<Digest>,
@@ -95,6 +99,7 @@ impl Witness {
             u(&mut b, p.t);
         }
         b.extend_from_slice(&self.blind);
+        b.extend_from_slice(&self.dev_key);
         u(&mut b, self.sig.reveal.len() as u32);
         for d in self.sig.reveal.iter().chain(&self.sig.other) {
             b.extend_from_slice(d);
@@ -130,6 +135,7 @@ impl Witness {
         let n = u32_of(take(4)) as usize;
         let traj = (0..n).map(|_| Point { x: u32_of(take(4)), y: u32_of(take(4)), t: u32_of(take(4)) }).collect();
         let blind: [u8; 32] = take(32).try_into().unwrap();
+        let dev_key: [u8; 32] = take(32).try_into().unwrap();
         let k = u32_of(take(4)) as usize;
         let reveal = (0..k).map(|_| dig(take(32))).collect();
         let other = (0..k).map(|_| dig(take(32))).collect();
@@ -141,7 +147,7 @@ impl Witness {
         let reg_path = (0..r).map(|_| dig(take(32))).collect();
         let slot = u32_of(take(4));
         assert!(pos == b.len(), "trailing witness bytes");
-        Witness { traj, blind, sig: LamportSig { reveal, other }, leaf_index, epoch_path, reg_index, reg_path, slot }
+        Witness { traj, blind, dev_key, sig: LamportSig { reveal, other }, leaf_index, epoch_path, reg_index, reg_path, slot }
     }
 }
 
@@ -152,6 +158,9 @@ pub struct Statement {
     pub reg_root: Digest,
     pub verifier: Digest,
     pub budget: u32,
+    /// Budget period (e.g. calendar month index). The verifier checks it is
+    /// the current one; the wallet grants `budget` slots per (verifier, period).
+    pub period: u32,
 }
 
 /// What the proof publishes.
@@ -268,8 +277,20 @@ pub fn scan_eval(traj: &[Point], policy: &Policy) -> bool {
     has[k - 1] && !violated
 }
 
-pub fn nullifier<H: Hasher>(c: &Digest, verifier: &Digest, slot: u32) -> Digest {
-    tagged::<H>(b"zkmob/null", &[c, verifier, &slot.to_le_bytes()])
+/// Public tag of a device budget key, bound into the device's registry leaf.
+pub fn device_tag<H: Hasher>(dev_key: &Digest) -> Digest {
+    tagged::<H>(b"zkmob/devkey", &[dev_key])
+}
+
+/// Registry leaf for an admitted epoch root of a device with budget tag K_D.
+pub fn registry_leaf<H: Hasher>(epoch_root: &Digest, dev_tag: &Digest) -> Digest {
+    tagged::<H>(b"zkmob/regleaf", &[epoch_root, dev_tag])
+}
+
+/// Device-level nullifier: one budget per device, verifier and period,
+/// shared by every trace the device signs.
+pub fn nullifier<H: Hasher>(dev_key: &Digest, verifier: &Digest, period: u32, slot: u32) -> Digest {
+    tagged::<H>(b"zkmob/null/dev-period", &[dev_key, verifier, &period.to_le_bytes(), &slot.to_le_bytes()])
 }
 
 /// The whole relation: panics if the witness is invalid, otherwise returns
@@ -278,11 +299,12 @@ pub fn check<H: Hasher>(st: &Statement, w: &Witness) -> Journal {
     let c = commit::<H>(&w.traj, &w.blind);
     let leaf = lamport_verify::<H>(&c, &w.sig);
     let epoch_root = merkle_root::<H>(leaf, w.leaf_index, &w.epoch_path);
-    let root = merkle_root::<H>(epoch_root, w.reg_index, &w.reg_path);
+    let reg_leaf = registry_leaf::<H>(&epoch_root, &device_tag::<H>(&w.dev_key));
+    let root = merkle_root::<H>(reg_leaf, w.reg_index, &w.reg_path);
     assert!(root == st.reg_root, "signature does not chain to the registry root");
     assert!(w.slot < st.budget, "slot outside the budget");
     let outcome = scan_eval(&w.traj, &st.policy);
-    Journal { statement: st.clone(), outcome, nullifier: nullifier::<H>(&c, &st.verifier, w.slot) }
+    Journal { statement: st.clone(), outcome, nullifier: nullifier::<H>(&w.dev_key, &st.verifier, st.period, w.slot) }
 }
 
 #[cfg(test)]
@@ -351,6 +373,7 @@ mod tests {
         let w = Witness {
             traj: vec![Point { x: 1, y: 2, t: 3 }, Point { x: 4, y: 5, t: 6 }],
             blind: [7; 32],
+            dev_key: [9; 32],
             sig: LamportSig { reveal: vec![[1; 32]; 3], other: vec![[2; 32]; 3] },
             leaf_index: 9,
             epoch_path: vec![[3; 32]; 2],
@@ -359,7 +382,7 @@ mod tests {
             slot: 5,
         };
         let back = Witness::from_bytes(&w.to_bytes());
-        assert_eq!((back.traj, back.blind, back.sig.reveal, back.sig.other), (w.traj.clone(), w.blind, w.sig.reveal.clone(), w.sig.other.clone()));
+        assert_eq!((back.traj, back.blind, back.dev_key, back.sig.reveal, back.sig.other), (w.traj.clone(), w.blind, w.dev_key, w.sig.reveal.clone(), w.sig.other.clone()));
         assert_eq!((back.leaf_index, back.epoch_path, back.reg_index, back.reg_path, back.slot), (9, w.epoch_path, 11, w.reg_path, 5));
     }
 
