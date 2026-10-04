@@ -19,7 +19,7 @@ fn guest_accepts_honest_and_rejects_forgeries() {
     let traj = trace();
     let signed = setup_fixture(traj.clone(), 3, 6, 5);
     let v = sha(&[b"v"]);
-    let yes = Statement { policy: policy_between(&traj, 5, 20, 1.5), reg_root: signed.reg_root, verifier: v, budget: 3 };
+    let yes = Statement { policy: policy_between(&traj, 5, 20, 1.5), reg_root: signed.reg_root, verifier: v, budget: 3, period: 0 };
     let no = Statement { policy: policy_between(&traj, 5, 20, 0.5), ..yes.clone() };
 
     // honest: both outcomes, journal equals the native relation

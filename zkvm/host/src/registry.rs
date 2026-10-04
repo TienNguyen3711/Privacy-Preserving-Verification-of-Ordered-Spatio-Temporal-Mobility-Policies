@@ -13,7 +13,7 @@ use std::io::{self, Read, Write};
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
-use zkmob_core::{commit, Digest, Point};
+use zkmob_core::{commit, device_tag, registry_leaf, Digest, Point};
 use crate::{Epoch, SignedTrace, Tree, H};
 
 type Sk = ml_dsa::SigningKey<ml_dsa::MlDsa65>;
@@ -45,9 +45,10 @@ fn verify(vk: &[u8], msg: &[u8], ctx: &[u8], sig: &[u8]) -> bool {
     ml_dsa::Signature::<ml_dsa::MlDsa65>::decode(&enc).is_some_and(|s| vk.verify_with_context(msg, ctx, &s))
 }
 
-fn epoch_msg(epoch: u64, root: &Digest) -> Vec<u8> {
+fn epoch_msg(epoch: u64, root: &Digest, dev_tag: &Digest) -> Vec<u8> {
     let mut m = epoch.to_le_bytes().to_vec();
     m.extend_from_slice(root);
+    m.extend_from_slice(dev_tag);
     m
 }
 
@@ -77,13 +78,24 @@ impl Manufacturer {
 
 /// Public admission request for one epoch root.
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Admission { pub device_vk: Vec<u8>, pub cert: Vec<u8>, pub epoch: u64, pub root: Digest, pub sig: Vec<u8> }
+pub struct Admission {
+    pub device_vk: Vec<u8>,
+    pub cert: Vec<u8>,
+    pub epoch: u64,
+    pub root: Digest,
+    /// H(k_D): the device's budget tag, fixed for the device's lifetime.
+    pub dev_tag: Digest,
+    pub sig: Vec<u8>,
+}
 
 /// Device secrets and one-time-key state. Must be persisted after every use.
 #[derive(Serialize, Deserialize)]
 pub struct Device {
     mldsa_seed: [u8; 32],
     epoch_seed: [u8; 32],
+    /// Budget key k_D: secret, one per device, never rotated (rotating it
+    /// would reset every verifier's budget for this device).
+    dev_key: [u8; 32],
     pub epoch: u64,
     pub epoch_depth: usize,
     /// Next unused one-time key of the current epoch; only grows.
@@ -98,7 +110,7 @@ impl Device {
         if epoch_depth > 16 { return Err(invalid("epoch too large")); }
         let mldsa_seed = random32()?;
         let cert = mfr.certify(&vk_bytes(&sk(&mldsa_seed)));
-        let dev = Self { mldsa_seed, epoch_seed: random32()?, epoch: 1, epoch_depth, next_leaf: 0, cert };
+        let dev = Self { mldsa_seed, epoch_seed: random32()?, dev_key: random32()?, epoch: 1, epoch_depth, next_leaf: 0, cert };
         let req = dev.admission();
         Ok((dev, req))
     }
@@ -106,8 +118,9 @@ impl Device {
     fn admission(&self) -> Admission {
         let key = sk(&self.mldsa_seed);
         let root = Epoch::generate(self.epoch_seed, self.epoch_depth).root();
-        Admission { device_vk: vk_bytes(&key), cert: self.cert.clone(), epoch: self.epoch, root,
-            sig: sign(&key, &epoch_msg(self.epoch, &root), EPOCH_CTX) }
+        let dev_tag = device_tag::<H>(&self.dev_key);
+        Admission { device_vk: vk_bytes(&key), cert: self.cert.clone(), epoch: self.epoch, root, dev_tag,
+            sig: sign(&key, &epoch_msg(self.epoch, &root, &dev_tag), EPOCH_CTX) }
     }
 
     /// Record and sign one trace with the next one-time key, and attach the
@@ -122,7 +135,7 @@ impl Device {
         let c = commit::<H>(&traj, &blind);
         let (leaf_index, sig, epoch_path) = epoch.sign(&c);
         self.next_leaf = leaf_index + 1;
-        Ok(SignedTrace { traj, blind, sig, leaf_index, epoch_path, reg_index, reg_path, reg_root: reg.root })
+        Ok(SignedTrace { traj, blind, dev_key: self.dev_key, sig, leaf_index, epoch_path, reg_index, reg_path, reg_root: reg.root })
     }
 }
 
@@ -152,15 +165,20 @@ impl Registry {
     pub fn build(manufacturer_vk: Vec<u8>, depth: usize, requests: Vec<Admission>) -> io::Result<Self> {
         if depth > 31 || requests.len() > 1usize << depth { return Err(invalid("registry too small")); }
         let mut last: BTreeMap<Vec<u8>, u64> = BTreeMap::new();
+        let mut tags: BTreeMap<Vec<u8>, Digest> = BTreeMap::new();
         let mut roots = std::collections::BTreeSet::new();
         for r in &requests {
             if !verify(&manufacturer_vk, &r.device_vk, CERT_CTX, &r.cert) { return Err(invalid("device certificate rejected")); }
-            if !verify(&r.device_vk, &epoch_msg(r.epoch, &r.root), EPOCH_CTX, &r.sig) { return Err(invalid("epoch signature rejected")); }
+            if !verify(&r.device_vk, &epoch_msg(r.epoch, &r.root, &r.dev_tag), EPOCH_CTX, &r.sig) { return Err(invalid("epoch signature rejected")); }
+            // One budget tag per device: a new tag would reset its budgets.
+            if tags.get(&r.device_vk).is_some_and(|t| *t != r.dev_tag) { return Err(invalid("device budget tag changed")); }
+            if tags.iter().any(|(vk, t)| *t == r.dev_tag && *vk != r.device_vk) { return Err(invalid("budget tag reused by another device")); }
+            tags.insert(r.device_vk.clone(), r.dev_tag);
             if last.get(&r.device_vk).is_some_and(|&e| r.epoch <= e) { return Err(invalid("epoch number not increasing")); }
             if !roots.insert(r.root) { return Err(invalid("duplicate epoch root")); }
             last.insert(r.device_vk.clone(), r.epoch);
         }
-        let root = Tree::new(depth, requests.iter().map(|r| r.root).collect()).root();
+        let root = Tree::new(depth, requests.iter().map(|r| registry_leaf::<H>(&r.root, &r.dev_tag)).collect()).root();
         Ok(Self { manufacturer_vk, depth, admissions: requests, root })
     }
 
@@ -171,7 +189,7 @@ impl Registry {
 
     pub fn path(&self, epoch_root: &Digest) -> Option<(u32, Vec<Digest>)> {
         let i = self.admissions.iter().position(|a| &a.root == epoch_root)?;
-        Some((i as u32, Tree::new(self.depth, self.admissions.iter().map(|a| a.root).collect()).path(i)))
+        Some((i as u32, Tree::new(self.depth, self.admissions.iter().map(|a| registry_leaf::<H>(&a.root, &a.dev_tag)).collect()).path(i)))
     }
 }
 
@@ -194,7 +212,7 @@ mod tests {
         assert_ne!(sa.reg_index, sb.reg_index);
         let zone = BoxZone { xmin: 0, xmax: 100, ymin: 0, ymax: 100 };
         let st = Statement { policy: Policy { steps: vec![Step { zone, max_gap: None }], avoid: None },
-            reg_root: reg.root, verifier: [1; 32], budget: 2 };
+            reg_root: reg.root, verifier: [1; 32], budget: 2, period: 0 };
         for s in [&sa, &sb] {
             assert!(check::<H>(&st, &s.witness(0)).outcome);
         }

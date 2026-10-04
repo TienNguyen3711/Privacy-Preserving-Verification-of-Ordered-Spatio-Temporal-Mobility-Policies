@@ -25,8 +25,12 @@ fn invalid(msg: &str) -> io::Error { io::Error::new(io::ErrorKind::InvalidData, 
 /// files named by their SHA-256, referenced from the state, so the cost of a
 /// request does not grow with the number of stored receipts. Older wallets
 /// are rejected, never migrated: re-signing would create a new commitment,
-/// and resetting budgets is forbidden.
-pub const WALLET_VERSION: u32 = 4;
+/// and resetting budgets is forbidden. v5: one wallet per DEVICE holding
+/// every trace it signed; nullifiers derive from the device budget key, so a
+/// verifier's slots are shared by all traces of the device (review RR-11).
+/// v6: budgets renew per period (re-review NEW-01): B slots per (verifier,
+/// period), the period read from the trusted local clock.
+pub const WALLET_VERSION: u32 = 6;
 
 fn now_ms() -> io::Result<u64> {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
@@ -36,6 +40,8 @@ fn now_ms() -> io::Result<u64> {
 #[derive(Serialize, Deserialize)]
 struct Request {
     statement: Statement,
+    /// Index of the trace this request is about.
+    trace: u32,
     slot: u32,
     /// SHA-256 (hex) of the stored receipt in `receipts/`; the state, and
     /// hence the ledger digest, commits to the receipt bytes.
@@ -63,11 +69,16 @@ struct State {
     /// Fixed release latency in milliseconds after durable admission
     /// (0 = no padding; test/legacy helper only). Immutable after creation.
     release_latency_ms: u64,
-    signed: SignedTrace,
+    /// Every trace of one device (same budget key, same registry root).
+    traces: Vec<SignedTrace>,
+    /// Budget period length in seconds (0 = one lifetime period, number 0).
+    /// Fixed before the first request.
+    #[serde(default)]
+    period_s: u64,
     scopes: BTreeMap<String, Scope>,
 }
 
-pub struct Reservation { pub slot: u32, pub response: Option<Vec<u8>>, pub expired: bool, pub deadline_ms: u64 }
+pub struct Reservation { pub trace: u32, pub slot: u32, pub response: Option<Vec<u8>>, pub expired: bool, pub deadline_ms: u64 }
 
 pub struct Wallet {
     dir: PathBuf,
@@ -101,12 +112,10 @@ impl Wallet {
 
     fn create_inner(path: &Path, signed: SignedTrace, budget: u32, release_latency_ms: u64, key: Option<Zeroizing<[u8;32]>>, anchor: Option<Anchor>) -> io::Result<Self> {
         let meta = key.as_ref().map(|k| {
-            // Stable within this provisioned key/trace; a new random commitment
-            // does not permit re-enrolment/reset under the same key.
-            let mut bytes = b"zkmob/anchor-trace/v1".to_vec();
-            for p in &signed.traj {
-                for v in [p.x, p.y, p.t] { bytes.extend_from_slice(&v.to_le_bytes()); }
-            }
+            // Stable per device under this key: a second wallet for the same
+            // device (which would get a fresh budget) collides at the ledger.
+            let mut bytes = b"zkmob/anchor-device/v1".to_vec();
+            bytes.extend_from_slice(&zkmob_core::device_tag::<crate::H>(&signed.dev_key));
             let tag = ring::hmac::sign(&ring::hmac::Key::new(ring::hmac::HMAC_SHA256, k.as_ref()), &bytes);
             AnchorMeta { wallet_id: tag.as_ref().iter().map(|b| format!("{b:02x}")).collect(), revision: 0 }
         });
@@ -115,7 +124,7 @@ impl Wallet {
             .mode(0o600).open(path.join("wallet.lock"))?;
         lock.lock()?;
         let mut wallet = Self { dir: path.to_path_buf(), _lock: lock, poisoned: false, key, anchor, head: None,
-            state: State { version: WALLET_VERSION, anchor: meta, budget, release_latency_ms, signed, scopes: BTreeMap::new() } };
+            state: State { version: WALLET_VERSION, anchor: meta, budget, release_latency_ms, traces: vec![signed], period_s: 0, scopes: BTreeMap::new() } };
         wallet.persist()?;
         File::open(path.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new(".")))?.sync_all()?;
         Ok(wallet)
@@ -185,6 +194,10 @@ impl Wallet {
         if state.version != WALLET_VERSION {
             return Err(invalid("unsupported wallet version (older wallets are not migrated)"));
         }
+        let first = state.traces.first().ok_or_else(|| invalid("wallet without a trace"))?;
+        if state.traces.iter().any(|t| t.dev_key != first.dev_key || t.reg_root != first.reg_root) {
+            return Err(invalid("traces of different devices or registries"));
+        }
         for (v, scope) in &state.scopes {
             if scope.next > state.budget || scope.requests.len() != scope.next as usize {
                 return Err(invalid("corrupt wallet counter"));
@@ -193,7 +206,8 @@ impl Wallet {
             for req in scope.requests.values() {
                 if req.slot >= scope.next || !slots.insert(req.slot) || (req.expired && req.response.is_some())
                     || req.statement.budget != state.budget
-                    || req.statement.reg_root != state.signed.reg_root
+                    || req.statement.reg_root != state.traces[0].reg_root
+                    || req.trace as usize >= state.traces.len()
                     || Self::verifier_key(&req.statement) != *v {
                     return Err(invalid("corrupt wallet reservation"));
                 }
@@ -287,10 +301,56 @@ impl Wallet {
     }
 
     fn verifier_key(st: &Statement) -> String {
-        st.verifier.iter().map(|b| format!("{b:02x}")).collect()
+        Self::scope_key(&st.verifier, st.period)
     }
 
-    pub fn signed(&self) -> &SignedTrace { &self.state.signed }
+    fn scope_key(verifier: &[u8; 32], period: u32) -> String {
+        let v: String = verifier.iter().map(|b| format!("{b:02x}")).collect();
+        format!("{v}/{period}")
+    }
+
+    /// Set the budget period length (seconds). Only before the first request:
+    /// changing it later could re-open spent periods.
+    pub fn set_period_len(&mut self, period_s: u64) -> io::Result<()> {
+        self.ensure_current()?;
+        if !self.state.scopes.is_empty() { return Err(invalid("period length is fixed after the first request")); }
+        self.state.period_s = period_s;
+        self.persist()
+    }
+    pub fn period_len(&self) -> u64 { self.state.period_s }
+
+    /// Current budget period from the trusted local clock.
+    pub fn current_period(&self) -> io::Result<u32> {
+        if self.state.period_s == 0 { return Ok(0); }
+        u32::try_from(now_ms()? / 1000 / self.state.period_s).map_err(|_| invalid("period overflow"))
+    }
+
+    /// Period of an existing request id for this verifier (for retries that
+    /// span a period boundary), if any.
+    pub fn request_period(&self, id: &str, verifier: &[u8; 32]) -> Option<u32> {
+        self.state.scopes.values().flat_map(|s| s.requests.get(id))
+            .find(|r| &r.statement.verifier == verifier).map(|r| r.statement.period)
+    }
+
+    /// The first trace (wallets created with one trace).
+    pub fn signed(&self) -> &SignedTrace { &self.state.traces[0] }
+    pub fn trace(&self, i: u32) -> Option<&SignedTrace> { self.state.traces.get(i as usize) }
+    pub fn trace_count(&self) -> u32 { self.state.traces.len() as u32 }
+
+    /// Add another trace signed by the SAME device (same budget key and
+    /// registry snapshot). Its queries share the device's per-verifier slots.
+    pub fn add_trace(&mut self, signed: SignedTrace) -> io::Result<u32> {
+        self.ensure_current()?;
+        let first = &self.state.traces[0];
+        if signed.dev_key != first.dev_key { return Err(invalid("trace from another device")); }
+        if signed.reg_root != first.reg_root { return Err(invalid("trace from another registry snapshot")); }
+        if self.state.traces.iter().any(|t| t.blind == signed.blind || (t.leaf_index == signed.leaf_index && t.reg_index == signed.reg_index)) {
+            return Err(invalid("trace or one-time key already in the wallet"));
+        }
+        self.state.traces.push(signed);
+        self.persist()?;
+        Ok(self.state.traces.len() as u32 - 1)
+    }
     pub fn budget(&self) -> u32 { self.state.budget }
     pub fn release_latency_ms(&self) -> u64 { self.state.release_latency_ms }
     /// Slots spent for this statement's verifier (read-only; for audits/tests).
@@ -302,27 +362,37 @@ impl Wallet {
     /// caller. Persist before policy evaluation, proof generation or release.
     /// None = exhausted. Same ID/context = retry, even after exhaustion.
     pub fn reserve(&mut self, id: &str, st: &Statement) -> io::Result<Option<Reservation>> {
+        self.reserve_for(id, st, 0)
+    }
+
+    /// Reserve a slot for a query about trace `trace`. Slots belong to the
+    /// device and verifier, not to the trace.
+    pub fn reserve_for(&mut self, id: &str, st: &Statement, trace: u32) -> io::Result<Option<Reservation>> {
         self.ensure_current()?;
         if id.is_empty() || id.len() > 1024 { return Err(invalid("invalid request id")); }
-        if st.budget != self.state.budget || st.reg_root != self.state.signed.reg_root {
+        if st.budget != self.state.budget || st.reg_root != self.state.traces[0].reg_root {
             return Err(invalid("immutable budget/root mismatch"));
         }
+        if trace as usize >= self.state.traces.len() { return Err(invalid("unknown trace")); }
         let scope = self.state.scopes.entry(Self::verifier_key(st)).or_default();
         if let Some(req) = scope.requests.get(id) {
-            if req.statement != *st { return Err(invalid("request id is bound to another statement")); }
+            if req.statement != *st || req.trace != trace { return Err(invalid("request id is bound to another statement or trace")); }
             let (slot, expired, deadline_ms, hash) = (req.slot, req.expired, req.deadline_ms, req.response.clone());
             let response = hash.map(|h| self.read_receipt(&h)).transpose()?;
-            return Ok(Some(Reservation { slot, response, expired, deadline_ms }));
+            return Ok(Some(Reservation { trace, slot, response, expired, deadline_ms }));
         }
         if scope.next == self.state.budget { return Ok(None); }
+        // A fresh request may only spend the CURRENT period's budget; a
+        // verifier naming another period would otherwise get fresh slots.
+        if st.period != self.current_period()? { return Err(invalid("statement period is not the current period")); }
         let latency = self.state.release_latency_ms;
         let deadline_ms = if latency == 0 { 0 } else { now_ms()? + latency };
         let scope = self.state.scopes.get_mut(&Self::verifier_key(st)).expect("scope exists");
         let slot = scope.next;
         scope.next += 1;
-        scope.requests.insert(id.to_owned(), Request { statement: st.clone(), slot, response: None, expired: false, deadline_ms });
+        scope.requests.insert(id.to_owned(), Request { statement: st.clone(), trace, slot, response: None, expired: false, deadline_ms });
         self.persist()?;
-        Ok(Some(Reservation { slot, response: None, expired: false, deadline_ms }))
+        Ok(Some(Reservation { trace, slot, response: None, expired: false, deadline_ms }))
     }
 
     /// Mark a pending request as expired because its proof was not ready by
