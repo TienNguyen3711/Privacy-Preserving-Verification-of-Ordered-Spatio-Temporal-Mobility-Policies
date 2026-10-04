@@ -40,7 +40,7 @@ impl Service {
 impl Drop for Service { fn drop(&mut self) { let _ = self.child.kill(); let _ = self.child.wait(); let _ = fs::remove_dir_all(&self.root); } }
 
 fn statement(w: &Wallet) -> Statement {
-    Statement { policy: policy_between(&w.signed().traj, 1, 6, 2.), reg_root: w.signed().reg_root, verifier: sha(&[b"v"]), budget: w.budget() }
+    Statement { policy: policy_between(&w.signed().traj, 1, 6, 2.), reg_root: w.signed().reg_root, verifier: sha(&[b"v"]), budget: w.budget(), period: 0 }
 }
 
 /// A complete next snapshot that was never committed: S0 with the next revision.

@@ -153,13 +153,32 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "initialized randomized LOCAL registry wallet (test fixture: not ML-DSA admission; root identifies the wallet)"),
             _ => return Err("use --device and --registry together, or --local-registry alone".into()),
         };
-        let _wallet = if let Some(key) = &key {
+        // Budget period in seconds (0 = lifetime cap). Fixed at enrolment.
+        let period_s: u64 = get("--period-s").map(|p| p.parse()).unwrap_or(Ok(0))?;
+        let mut wallet = if let Some(key) = &key {
             Wallet::create_protected_with_latency(path, signed, budget, latency_ms, **key, service()?)?
         } else { Wallet::create_with_latency(path, signed, budget, latency_ms)? };
+        if period_s > 0 { wallet.set_period_len(period_s)?; }
         println!("{note}");
         return Ok(());
     }
-    if args.iter().any(|s| ["--budget", "--traces", "--n", "--latency-ms", "--device", "--registry", "--trace-index", "--local-registry"].contains(&s.as_str())) {
+    if args.iter().any(|s| s == "--add-trace") {
+        // Another trace signed by the same device; it shares the device's
+        // per-verifier budget. Global registry only (the device file keeps
+        // the one-time-key counter across traces).
+        let n: usize = get("--n")?.parse()?;
+        let k: usize = get("--trace-index").map(|k| k.parse()).unwrap_or(Ok(0))?;
+        let reg: Registry = serde_json::from_slice(&std::fs::read(get("--registry")?)?)?;
+        if !reg.verify() { return Err("registry snapshot does not verify".into()); }
+        let mut wallet = if let Some(key) = &key {
+            Wallet::open_protected(path, **key, service()?)?
+        } else { Wallet::open(path)? };
+        let signed = sign_with_device_file(Path::new(get("--device")?), &reg, load_trace_nth(get("--traces")?, n, k))?;
+        let i = wallet.add_trace(signed)?;
+        println!("added trace {i}");
+        return Ok(());
+    }
+    if args.iter().any(|s| ["--budget", "--traces", "--n", "--latency-ms", "--period-s", "--device", "--registry", "--trace-index", "--local-registry"].contains(&s.as_str())) {
         return Err("trace, budget and release latency are immutable; these options are init-only".into());
     }
     let policy: Policy = serde_json::from_reader(std::fs::File::open(get("--policy")?)?)?;
@@ -176,8 +195,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut wallet = if let Some(key) = &key {
         Wallet::open_protected(path, **key, service()?)?
     } else { Wallet::open(path)? }; // lock stays held through response output
-    let st = Statement { policy, reg_root: wallet.signed().reg_root, verifier, budget: wallet.budget() };
-    let Some(reservation) = wallet.reserve(id, &st)? else {
+    // A retry keeps its original period; a fresh request uses the current one.
+    let period = match wallet.request_period(id, &verifier) { Some(p) => p, None => wallet.current_period()? };
+    let st = Statement { policy, reg_root: wallet.signed().reg_root, verifier, budget: wallet.budget(), period };
+    let trace: u32 = get("--trace").map(|t| t.parse()).unwrap_or(Ok(0))?;
+    let Some(reservation) = wallet.reserve_for(id, &st, trace)? else {
         println!("exhausted");
         return Ok(());
     };
@@ -187,7 +209,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let latency = wallet.release_latency_ms() > 0;
     let deadline = reservation.deadline_ms;
-    let witness = wallet.signed().witness(reservation.slot);
+    let witness = wallet.trace(reservation.trace).ok_or("unknown trace")?.witness(reservation.slot);
     let bytes = if let Some(cached) = reservation.response { cached } else {
         if latency && now_ms() >= deadline {
             // Resumed after the deadline (e.g. a crash while proving).

@@ -86,6 +86,10 @@ fn setup() -> Setup {
     let mut registry = Registry::new(&h, 4);
     let mut dev = Device::manufacture([2u8; 32], [3u8; 32], 2, &m);
     let id = registry.enroll(&dev.vk_bytes(), &dev.cert, &mldsa_vk(&m)).unwrap();
+    let (_k, tag) = dev.budget_key(&h);
+    registry.register_budget_tag(id, &tag, &dev.sign_budget_tag(&tag)).unwrap();
+    assert!(registry.register_budget_tag(id, &(tag + Fr::from(1u64)), &dev.sign_budget_tag(&(tag + Fr::from(1u64)))).is_err(),
+        "a device cannot register a second budget tag");
     let ec = dev.new_epoch(&h);
     let reg_index = registry.register_epoch(&h, id, &ec).unwrap();
     Setup { h, registry, dev, reg_index }
@@ -100,10 +104,11 @@ fn budget_slots_nullifiers_and_log() {
     let sig = s.dev.sign(&s.h, &c).unwrap();
     let (v1, v2) = (Fr::from(501u64), Fr::from(502u64));
     let budget = 3u64;
-    let circ = |steps: Vec<Step>, outcome: bool, v: Fr, slot: u64| BudgetedCircuit {
-        traj: sc.traj.clone(), steps, avoid: None, outcome, blind, sig: sig.clone(), reg_index: s.reg_index,
-        reg_path: s.registry.path(s.reg_index), reg_root: s.registry.root(), verifier: v, budget, slot,
+    let circ_p = |steps: Vec<Step>, outcome: bool, v: Fr, period: u64, slot: u64| BudgetedCircuit {
+        traj: sc.traj.clone(), steps, avoid: None, outcome, blind, dev_key: s.dev.budget_key(&s.h).0, sig: sig.clone(), reg_index: s.reg_index,
+        reg_path: s.registry.path(s.reg_index), reg_root: s.registry.root(), verifier: v, budget, period, slot,
     };
+    let circ = |steps: Vec<Step>, outcome: bool, v: Fr, slot: u64| circ_p(steps, outcome, v, 0, slot);
     let yes = sc.two_step(200);
     let no = sc.two_step(30);
     assert!(find_witness(&sc.traj, &yes, None).is_some() && find_witness(&sc.traj, &no, None).is_none());
@@ -130,11 +135,16 @@ fn budget_slots_nullifiers_and_log() {
     assert!(log.accept(&v1, &n(v1, 0)) && log.accept(&v1, &n(v1, 1)) && log.accept(&v2, &n(v2, 0)));
     assert!(!log.accept(&v1, &n(v1, 0)), "replayed slot rejected");
 
-    // prover wallet hands out exactly B slots per (trace, verifier)
+    // prover wallet hands out exactly B slots per (device, verifier)
     let mut wallet = SlotWallet::default();
-    let got: Vec<_> = (0..5).map(|_| wallet.next(&c, &v1, budget)).collect();
+    let k = s.dev.budget_key(&s.h).0;
+    let got: Vec<_> = (0..5).map(|_| wallet.next(&k, &v1, 0, budget)).collect();
     assert_eq!(got, vec![Some(0), Some(1), Some(2), None, None]);
-    assert_eq!(wallet.next(&c, &v2, budget), Some(0), "separate budget per verifier");
+    assert_eq!(wallet.next(&k, &v2, 0, budget), Some(0), "separate budget per verifier");
+    // budgets renew per period: a new period has fresh slots and nullifiers
+    assert_eq!(wallet.next(&k, &v1, 1, budget), Some(0), "fresh budget in the next period");
+    assert!(sat(circ_p(yes.clone(), true, v1, 1, 0)));
+    assert_ne!(circ_p(yes.clone(), true, v1, 1, 0).nullifier(&s.h), n(v1, 0), "period enters the nullifier");
 }
 
 #[test]
@@ -144,9 +154,9 @@ fn budgeted_groth16_end_to_end() {
     let c = commit_native_hiding(&poseidon_config::<Fr>(), &sc.traj, 7);
     let sig = s.dev.sign(&s.h, &c).unwrap();
     let circ = |steps: Vec<Step>, outcome, slot| BudgetedCircuit {
-        traj: sc.traj.clone(), steps, avoid: Some(sc.restricted), outcome, blind: 7, sig: sig.clone(),
+        traj: sc.traj.clone(), steps, avoid: Some(sc.restricted), outcome, blind: 7, dev_key: s.dev.budget_key(&s.h).0, sig: sig.clone(),
         reg_index: s.reg_index, reg_path: s.registry.path(s.reg_index), reg_root: s.registry.root(),
-        verifier: Fr::from(9u64), budget: 4, slot,
+        verifier: Fr::from(9u64), budget: 4, period: 3, slot,
     };
     let mut rng = StdRng::seed_from_u64(5);
     let (pk, vk) = Groth16::<Bn254>::circuit_specific_setup(circ(sc.two_step(200), true, 0), &mut rng).unwrap();
@@ -157,8 +167,13 @@ fn budgeted_groth16_end_to_end() {
         assert!(Groth16::<Bn254>::verify(&vk, &public, &proof).unwrap());
         // flipping the public outcome bit breaks verification
         let mut bad = public.clone();
-        let ob = bad.len() - 5;
+        let ob = bad.len() - 6;
         bad[ob] = Fr::from(!outcome as u64);
         assert!(!Groth16::<Bn254>::verify(&vk, &bad, &proof).unwrap());
+        // a proof for period 3 does not verify as one for another period
+        let mut other = public.clone();
+        let pi = other.len() - 2;
+        other[pi] = Fr::from(4u64);
+        assert!(!Groth16::<Bn254>::verify(&vk, &other, &proof).unwrap());
     }
 }

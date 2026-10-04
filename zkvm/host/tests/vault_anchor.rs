@@ -29,7 +29,7 @@ impl Drop for Service { fn drop(&mut self) { let _ = self.child.kill(); let _ = 
 fn signed() -> host::SignedTrace {
     setup_randomized_local((0..8).map(|i| Point{x:100*i,y:100*i,t:10*i}).collect(), 2, 4, 2).unwrap()
 }
-fn st(w: &Wallet) -> Statement { Statement { policy: policy_between(&w.signed().traj,1,6,2.), reg_root:w.signed().reg_root, verifier:sha(&[b"v"]), budget:w.budget() } }
+fn st(w: &Wallet) -> Statement { Statement { policy: policy_between(&w.signed().traj,1,6,2.), reg_root:w.signed().reg_root, verifier:sha(&[b"v"]), budget:w.budget(), period:0 } }
 
 #[test]
 fn authenticated_encryption_and_key_handling() {
@@ -77,9 +77,15 @@ fn restart_cached_response_and_no_plaintext_files() {
 }
 
 #[test]
-fn cannot_reenrol_same_trace_under_same_key() {
-    let s=Service::new(); drop(s.create("first"));
-    assert!(Wallet::create_protected(&s.root.join("second"),signed(),99,[7;32],s.client()).is_err());
+fn cannot_reenrol_same_device_under_same_key() {
+    // v5: the ledger identity is the device (its budget tag), so a second
+    // wallet for the same device, which would start with a fresh budget, is
+    // rejected; another device gets its own identity.
+    let s=Service::new();
+    let device=signed();
+    drop(Wallet::create_protected(&s.root.join("first"),device.clone(),2,[7;32],s.client()).unwrap());
+    assert!(Wallet::create_protected(&s.root.join("second"),device,99,[7;32],s.client()).is_err());
+    assert!(Wallet::create_protected(&s.root.join("other"),signed(),2,[7;32],s.client()).is_ok());
 }
 
 #[test]
@@ -337,7 +343,7 @@ fn seeded_state_machine_matches_reference_across_restarts() {
             let blob = fs::read(s.root.join("w/state.enc")).unwrap();
             let state: serde_json::Value = serde_json::from_slice(&vault::open(&[7;32], &blob).unwrap()).unwrap();
             for v in 0..3u8 {
-                let scope = &state["scopes"][format!("{v:02x}").repeat(32)];
+                let scope = &state["scopes"][format!("{}/0", format!("{v:02x}").repeat(32))];
                 let entries: Vec<_> = model.iter().filter(|((scope, _), _)| *scope == v).collect();
                 assert_eq!(scope["next"].as_u64().unwrap_or(0), entries.len() as u64);
                 for ((_, id), (slot, response)) in entries {

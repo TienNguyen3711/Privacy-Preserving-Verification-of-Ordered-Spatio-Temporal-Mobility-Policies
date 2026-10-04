@@ -71,6 +71,7 @@ pub fn enforce_signed_commitment<F: PrimeField + Absorb>(
     reg_index: usize,
     reg_path: &[F],
     root: &FpVar<F>,
+    dev_tag: Option<&FpVar<F>>,
 ) -> Result<FpVar<F>, SynthesisError> {
     let r = FpVar::new_witness(cs.clone(), || Ok(F::from(blind)))?;
     let mut absorb = vec![r];
@@ -84,8 +85,12 @@ pub fn enforce_signed_commitment<F: PrimeField + Absorb>(
     let leaf = ots_pk_hash_gadget(cs.clone(), cfg, &c, &reveal, &other)?;
     let dev_bits = alloc_index_bits(cs.clone(), sig.leaf, sig.path.len())?;
     let epoch_root = merkle_root_gadget(cs.clone(), cfg, leaf, &dev_bits, &wit(&sig.path)?)?;
+    let reg_leaf = match dev_tag {
+        Some(t) => crate::sig::hash_gadget(cs.clone(), cfg, crate::sig::TAG_REGLEAF, &[epoch_root, t.clone()])?,
+        None => epoch_root,
+    };
     let reg_bits = alloc_index_bits(cs.clone(), reg_index, reg_path.len())?;
-    merkle_root_gadget(cs.clone(), cfg, epoch_root, &reg_bits, &wit(reg_path)?)?.enforce_equal(root)?;
+    merkle_root_gadget(cs.clone(), cfg, reg_leaf, &reg_bits, &wit(reg_path)?)?.enforce_equal(root)?;
     Ok(c)
 }
 
@@ -96,7 +101,7 @@ impl<F: PrimeField + Absorb> ConstraintSynthesizer<F> for UnlinkableCircuit<F> {
         let root = FpVar::new_input(cs.clone(), || Ok(self.reg_root))?;
         let (xs, ys, ts) = alloc_trajectory(&cs, &self.traj)?;
         let _c = enforce_signed_commitment(&cs, &cfg, flatten_vars(&xs, &ys, &ts), self.blind, &self.sig,
-            self.reg_index, &self.reg_path, &root)?;
+            self.reg_index, &self.reg_path, &root, None)?;
         enforce_policy(&cs, &pol, &xs, &ys, &ts, self.witness.as_deref())
     }
 }

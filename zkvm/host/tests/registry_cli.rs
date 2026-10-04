@@ -48,7 +48,7 @@ fn concurrent_initialisations_never_reuse_a_one_time_key() {
     assert!(children.is_empty(), "{}", String::from_utf8_lossy(&children[0].stderr));
     let mut leaves: Vec<u64> = (0..16).map(|i| {
         let s: serde_json::Value = serde_json::from_slice(&fs::read(t.0.join(format!("w{i}/state.json"))).unwrap()).unwrap();
-        s["signed"]["leaf_index"].as_u64().unwrap()
+        s["traces"][0]["leaf_index"].as_u64().unwrap()
     }).collect();
     leaves.sort();
     assert_eq!(leaves, (0..16).collect::<Vec<_>>(), "every wallet got a distinct one-time key");
