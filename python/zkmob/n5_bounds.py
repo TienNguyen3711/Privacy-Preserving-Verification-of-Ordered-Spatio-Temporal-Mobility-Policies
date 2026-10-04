@@ -27,6 +27,9 @@ Experiment B — cumulative leakage about a person over K traces.
   so per-trace budgets do NOT bound per-user leakage; K traces multiply it.
   The posterior is non-uniform, so the effective anonymity set 2^{H(U|V)}
   and the min-entropy leakage differ from a candidate count.
+  With --device (review RR-11, 3 Oct 2026) the budget is per device: B answers
+  in total, spread as evenly as possible over the K trips, so
+      I(U; answers) <= B   whatever K.
 
     PYTHONPATH=python python3 -m zkmob.n5_bounds
 """
@@ -49,6 +52,7 @@ Q_SWEEP = (20, 50, 100, 300)
 B_SWEEP = (1, 2, 3, 4, 6, 8)
 K_SWEEP = (1, 2, 4, 8)
 B_USER = (1, 2, 4)
+B_DEVICE = (4, 8)
 
 
 def _setup(trips: Sequence[Trip], win: Window, period: int, length: int, seed: int, pool_size: int):
@@ -134,7 +138,7 @@ def falling(n: np.ndarray, k: int) -> np.ndarray:
         out *= np.maximum(n - i, 0)
     return out
 
-def experiment_b(name, e_cells, e_kept, pool, trials, seed, min_trips=10, max_trips=30) -> List[Dict]:
+def experiment_b(name, e_cells, e_kept, pool, trials, seed, min_trips=10, max_trips=30, device=False) -> List[Dict]:
     rng = np.random.default_rng(seed)
     by_user: Dict[str, List[int]] = defaultdict(list)
     for i, tr in enumerate(e_kept):
@@ -165,8 +169,11 @@ def experiment_b(name, e_cells, e_kept, pool, trials, seed, min_trips=10, max_tr
         return float(-(p * np.log2(p)).sum())
 
     rows = []
-    for B in B_USER:
+    for B in (B_DEVICE if device else B_USER):
         for K in K_SWEEP:
+            # answers per trip: B each (per-trace budget) or B in total (device budget)
+            alloc = [B // K + (i < B % K) for i in range(K)] if device else [B] * K
+            bound = B if device else K * B
             h_post, maxpost, hit = [], [], []
             for _ in range(trials):
                 truth = int(rng.integers(U))
@@ -175,10 +182,10 @@ def experiment_b(name, e_cells, e_kept, pool, trials, seed, min_trips=10, max_tr
                 picked = rng.choice(mine, K, replace=False)
                 logpost = np.zeros(U)
                 consistent = []
-                for t in picked:
+                for t, b_t in zip(picked, alloc):
                     alive = np.ones(N, dtype=bool)
                     used = np.zeros(len(pool), dtype=bool)
-                    for _ in range(B):
+                    for _ in range(b_t):
                         alive_u = alive.astype(np.float32) @ inc                    # (U,)
                         base = np.exp(logpost - logpost.max()) * (alive_u / n_u)
                         post = base / base.sum()
@@ -210,14 +217,15 @@ def experiment_b(name, e_cells, e_kept, pool, trials, seed, min_trips=10, max_tr
             shannon = prior_bits - h_post.mean()
             se = h_post.std(ddof=1) / np.sqrt(len(h_post))
             minent = float(np.log2(U * np.mean(maxpost)))
-            rows.append({"scope": name, "users": U, "trips_used": N, "budget_per_trace": B, "traces": K,
+            rows.append({"scope": name, "users": U, "trips_used": N,
+                         "budget_scope": "device" if device else "trace", "budget": B, "traces": K,
                          "shannon_bits": float(shannon), "shannon_ci95": float(1.96 * se), "minent_bits": minent,
                          "a_eff": float(2 ** h_post.mean()), "top1_identified": float(np.mean(hit)),
-                         "bound_bits": float(K * B), "prior_bits": prior_bits,
+                         "bound_bits": float(bound), "prior_bits": prior_bits,
                          # Monte Carlo: the Shannon estimate is unbiased; the
                          # min-entropy estimate is noisy, so only Shannon is checked
-                         "within_bound": shannon <= K * B + 1e-9, "method": f"monte_carlo_{trials}"})
-            print(f"  {name:>9} U={U:>3} B={B} K={K}: Shannon {shannon:5.2f} (bound {K * B:>2}), min-entropy {minent:5.2f}, "
+                         "within_bound": shannon <= bound + 1e-9, "method": f"monte_carlo_{trials}"})
+            print(f"  {name:>9} U={U:>3} {'device' if device else 'trace'} B={B} K={K}: Shannon {shannon:5.2f} (bound {bound:>2}), min-entropy {minent:5.2f}, "
                   f"A_eff {2 ** h_post.mean():6.1f} of {U}, top-1 identified {np.mean(hit):.0%}")
     return rows
 
@@ -237,6 +245,8 @@ def main() -> None:
     ap.add_argument("--pool", type=int, default=400)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--only-b", action="store_true", help="rerun Experiment B only")
+    ap.add_argument("--device", action="store_true",
+                    help="Experiment B with a per-device budget; writes results/n5_bounds_users_device.csv")
     a = ap.parse_args()
 
     porto = load_porto(max_rows=60_000)
@@ -254,9 +264,9 @@ def main() -> None:
         write(rows_a, "results/n5_bounds_charging.csv")
 
     print("Experiment B: leakage about the person over K traces")
-    rows_b = experiment_b("porto", p_cells, p_kept, p_pool, a.trials, a.seed)
-    rows_b += experiment_b("geolife", g_cells, g_kept, g_pool, a.trials, a.seed)
-    write(rows_b, "results/n5_bounds_users.csv")
+    rows_b = experiment_b("porto", p_cells, p_kept, p_pool, a.trials, a.seed, device=a.device)
+    rows_b += experiment_b("geolife", g_cells, g_kept, g_pool, a.trials, a.seed, device=a.device)
+    write(rows_b, "results/n5_bounds_users_device.csv" if a.device else "results/n5_bounds_users.csv")
 
     bad = [r for r in rows_a + rows_b if not r["within_bound"]]
     print(f"bound violations: {len(bad)} of {len(rows_a) + len(rows_b)} settings")
