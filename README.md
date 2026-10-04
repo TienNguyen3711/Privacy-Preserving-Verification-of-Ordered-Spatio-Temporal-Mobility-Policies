@@ -509,10 +509,10 @@ never reveals which root it uses.
   is never provable. Cost is about 450 constraints per fix for a 2-step
   policy (57k at n = 128, versus 1.6k for the selector circuit, which can only
   prove "holds").
-* **Budget:** public nullifier N = Poseidon(C ‖ V ‖ j) with a hidden slot
+* **Budget:** public nullifier N = Poseidon(k_D ‖ V ‖ j) (device budget key, since 3 Oct 2026; was C ‖ V ‖ j) with a hidden slot
   0 ≤ j < B, on top of the unlinkable relation. The verifier rejects repeated
-  nullifiers. Total 240,599 constraints at n = 128 (+32% over the unlinkable
-  circuit), and proving takes 1.4 s. `budget_demo` on a real GeoLife trace
+  nullifiers. Total 215,091 constraints at n = 128 after the 16/17-bit optimisation (240,599 before; +18% over the unlinkable
+  circuit), and proving takes about 1.5 s. `budget_demo` on a real GeoLife trace
   with B = 6: six answers (3 yes, 3 no) are accepted, queries 7 to 9 are
   refused, and a replayed proof is rejected.
 
