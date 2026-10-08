@@ -48,6 +48,7 @@ protection are implemented for a trusted independent ledger; see
 | `python/zkmob/datasets.py` | GeoLife / T-Drive / Porto loaders, cleaning, time split | Working, tested on fixtures and real files |
 | `python/zkmob/bridge.py` | Policy language → circuit policy; runs the prover | Working, tested |
 | `python/zkmob/n1_export.py`, `n1_report.py` | N1 real-data workload and summary | `results/n1_real_summary.csv` |
+| `python/zkmob/n1_grid_export.py`, `n1_fair.py --prefix n1_grid` | N1 robustness: grid zones and round windows, not anchored on the trace | `results/n1_grid_*.csv`, `results/n1_grid_summary.csv` |
 | `python/zkmob/leakage.py` | Baseline **B5**, claim **N5** (synthetic) | `results/b5_leakage.csv` |
 | `python/zkmob/n5_real.py` | N5 on real data (time-split) | `results/n5_real.csv` |
 
