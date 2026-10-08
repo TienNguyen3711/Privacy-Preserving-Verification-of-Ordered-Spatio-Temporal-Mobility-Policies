@@ -167,7 +167,7 @@ so run `. "$HOME/.cargo/env"` in a new shell) and Python 3.9+ with numpy.
 cd "Paper 3/Codebase/code"
 M=rust/zkmob-circuits/Cargo.toml
 
-# tests (24 Rust, 21 Python)
+# tests (25 Rust circuit tests, 43 Python; zkVM and Plonky3 tests below)
 cargo test --release --manifest-path $M
 PYTHONPATH=python python3 -m unittest discover -s python/tests -v
 
@@ -184,6 +184,14 @@ for ds in geolife tdrive porto; do
   cargo run --release --manifest-path $M --bin n1_real -- --in work/n1_$ds.jsonl --out results/n1_real_$ds.csv
 done
 PYTHONPATH=python python3 -m zkmob.n1_report
+# like-for-like costs and error split (paper Fig. 2, Tables S-II and S-III)
+PYTHONPATH=python python3 -m zkmob.n1_fair
+# robustness: grid zones and round windows, not anchored on the trace (Table S-IV)
+for ds in geolife tdrive porto; do
+  PYTHONPATH=python python3 -m zkmob.n1_grid_export --dataset $ds --trips 400
+  cargo run --release --manifest-path $M --bin n1_real -- --in work/n1_grid_$ds.jsonl --out results/n1_grid_$ds.csv
+done
+PYTHONPATH=python python3 -m zkmob.n1_fair --prefix n1_grid
 
 # N5 on real data (about 40 seconds)
 PYTHONPATH=python python3 -m zkmob.n5_real
@@ -199,7 +207,12 @@ PYTHONPATH=python python3 -m zkmob.n5_budget          # about 40 seconds
 # A4 timing: 12 alternating host runs (24 STARK proofs), then the analysis
 # (cd zkvm && for i in $(seq 1 12); do ./target/release/host --n 128 --out ../results/a4_timing.csv $([ $((i%2)) -eq 0 ] && echo --reverse); done)
 PYTHONPATH=python python3 -m zkmob.a4_timing
-PYTHONPATH=python python3 -W ignore -m zkmob.n5_bounds   # about 2 minutes
+# the paper's person-level results use 200 trials (the default of 40 gives
+# different Monte Carlo estimates); about 10 minutes per run
+PYTHONPATH=python python3 -W ignore -m zkmob.n5_bounds --trials 200
+PYTHONPATH=python python3 -W ignore -m zkmob.n5_bounds --only-b --device --trials 200
+# exact optimum with 64 candidates, five seeds (Table S-VIII)
+PYTHONPATH=python python3 -m zkmob.n5_initial_eval && PYTHONPATH=python python3 -m zkmob.n5_initial_report
 
 # step 7a: RISC Zero (install once: curl -L https://risczero.com/install | bash && rzup install)
 cd zkvm && cargo test --release && cargo run --release -p host -- --n 128 && cd ..   # never set RISC0_DEV_MODE
@@ -210,6 +223,9 @@ cd stark && cargo test --release && cargo run --release --bin stark_bench && cd 
 B=rust/zkmob-circuits/target/release/sig_bench; cargo build --release --manifest-path $M --bin sig_bench
 $B --header; for v in lamport_t3 lamport_t9 lamport_t17 wots_w4_t3 wots_w4_t17 wots_w4x_t3 wots_w16_t3 wots_w16_t17; do /usr/bin/time -l $B --variant $v; done
 PYTHONPATH=python python3 -m zkmob.slh_dsa_estimate
+
+# paper figures 2 and 3 from results/ (needs matplotlib)
+python3 scripts/results_figs.py OUT_DIR
 ```
 
 ## Conventions that matter for soundness
