@@ -1,6 +1,6 @@
 //! zkVM guest: checks the budgeted, unlinkable policy relation
 //! (`zkmob_core::check`) and publishes only the journal (policy, outcome,
-//! registry root, verifier, budget, nullifier). Any invalid witness makes
+//! registry root, verifier, budget, period, nullifier). Any invalid witness makes
 //! the guest panic, so no receipt can be produced for it.
 
 use risc0_zkvm::guest::env;

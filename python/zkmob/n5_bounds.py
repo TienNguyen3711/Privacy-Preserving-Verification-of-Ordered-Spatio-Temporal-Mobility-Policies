@@ -247,6 +247,10 @@ def main() -> None:
     ap.add_argument("--only-b", action="store_true", help="rerun Experiment B only")
     ap.add_argument("--device", action="store_true",
                     help="Experiment B with a per-device budget; writes results/n5_bounds_users_device.csv")
+    ap.add_argument("--geolife-users-b", type=int, default=0,
+                    help="GeoLife users loaded for Experiment B (top by file count; 0 = all 182). "
+                         "Experiment A keeps the 40 users with the most files. Before 6 Oct 2026, B also "
+                         "used those 40 users, which left 24 persons after filtering.")
     a = ap.parse_args()
 
     porto = load_porto(max_rows=60_000)
@@ -265,7 +269,15 @@ def main() -> None:
 
     print("Experiment B: leakage about the person over K traces")
     rows_b = experiment_b("porto", p_cells, p_kept, p_pool, a.trials, a.seed, device=a.device)
-    rows_b += experiment_b("geolife", g_cells, g_kept, g_pool, a.trials, a.seed, device=a.device)
+    users_b = sorted(files, key=lambda u: -len(files[u]))
+    if a.geolife_users_b:
+        users_b = users_b[:a.geolife_users_b]
+    if users_b != users:
+        geo_b = load_geolife(users=users_b)
+        gb_cells, gb_kept, gb_pool = _setup(geo_b, BEIJING_WIN, 30, 120, a.seed, a.pool)
+    else:
+        gb_cells, gb_kept, gb_pool = g_cells, g_kept, g_pool
+    rows_b += experiment_b("geolife", gb_cells, gb_kept, gb_pool, a.trials, a.seed, device=a.device)
     write(rows_b, "results/n5_bounds_users_device.csv" if a.device else "results/n5_bounds_users.csv")
 
     bad = [r for r in rows_a + rows_b if not r["within_bound"]]

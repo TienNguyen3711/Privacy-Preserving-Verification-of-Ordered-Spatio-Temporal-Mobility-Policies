@@ -71,11 +71,11 @@ pub struct LamportSig {
 pub struct Witness {
     pub traj: Vec<Point>,
     /// 256-bit blind: a 128-bit blind gives only about q*2^-64 against quantum
-    /// hash queries in the unlinkability hybrid (paper, App. D).
+    /// hash queries in the unlinkability hybrid (paper, Corollary 1).
     pub blind: [u8; 32],
     /// Device budget key k_D (secret). Its tag H(k_D) is bound into the
-    /// device's registry leaf, and nullifiers are H(k_D || V || slot), so all
-    /// traces of one device share one budget per verifier (review RR-11).
+    /// device's registry leaf, and nullifiers are H(k_D || V || p || j), so all
+    /// traces of one device share one budget per verifier and period (RR-11).
     pub dev_key: [u8; 32],
     pub sig: LamportSig,
     pub leaf_index: u32,

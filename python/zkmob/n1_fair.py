@@ -18,9 +18,12 @@ bucket width w it reports:
   on the trace, so tight policies sit near the decision boundary (RR-04);
   results/n1_fair_by_factor.csv splits tight policies by Delta / anchor gap.
 
-Writes results/n1_fair_summary.csv and prints a compact table.
+Writes results/n1_fair_summary.csv and prints a compact table. With
+``--prefix n1_grid`` it reads the grid workload of `n1_grid_export` instead
+and writes results/n1_grid_summary.csv (no by-factor split: gaps there are
+not set relative to the trace).
 
-    PYTHONPATH=python python3 -m zkmob.n1_fair [--sig 133931]
+    PYTHONPATH=python python3 -m zkmob.n1_fair [--sig 133931] [--prefix n1_grid]
 """
 
 from __future__ import annotations
@@ -41,10 +44,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sig", type=int, default=133_931,
                     help="Lamport verification + 22 Merkle levels (constraints; from n4_link)")
+    ap.add_argument("--prefix", default="n1_real", choices=["n1_real", "n1_grid"])
     a = ap.parse_args()
     out = []
     for ds in DATASETS:
-        rows = list(csv.DictReader(open(ROOT / f"results/n1_real_{ds}.csv")))
+        rows = list(csv.DictReader(open(ROOT / f"results/{a.prefix}_{ds}.csv")))
         by_w = defaultdict(list)
         for r in rows:
             by_w[int(r["bucket_s"])].append(r)
@@ -85,7 +89,7 @@ def main() -> None:
                 "median_scan": st.median(scan), "median_selector": st.median(sel), "median_commit": st.median(com),
             })
     by_factor = []
-    for ds in DATASETS:
+    for ds in DATASETS if a.prefix == "n1_real" else ():
         acc = defaultdict(lambda: [0, 0])
         for r in csv.DictReader(open(ROOT / f"results/n1_real_{ds}.csv")):
             key = (int(r["bucket_s"]), r["kind"], r["gap_factor"] or "-")
@@ -94,11 +98,12 @@ def main() -> None:
         for (w, kind, f), (e, n) in sorted(acc.items()):
             by_factor.append({"dataset": ds, "bucket_s": w, "kind": kind, "delta_over_gap": f,
                               "items": n, "err_any": round(e / n, 4)})
-    with open(ROOT / "results/n1_fair_by_factor.csv", "w", newline="") as fh:
-        wr = csv.DictWriter(fh, fieldnames=list(by_factor[0]))
-        wr.writeheader()
-        wr.writerows(by_factor)
-    path = ROOT / "results/n1_fair_summary.csv"
+    if by_factor:
+        with open(ROOT / "results/n1_fair_by_factor.csv", "w", newline="") as fh:
+            wr = csv.DictWriter(fh, fieldnames=list(by_factor[0]))
+            wr.writeheader()
+            wr.writerows(by_factor)
+    path = ROOT / ("results/n1_fair_summary.csv" if a.prefix == "n1_real" else "results/n1_grid_summary.csv")
     with open(path, "w", newline="") as fh:
         wr = csv.DictWriter(fh, fieldnames=list(out[0]))
         wr.writeheader()
