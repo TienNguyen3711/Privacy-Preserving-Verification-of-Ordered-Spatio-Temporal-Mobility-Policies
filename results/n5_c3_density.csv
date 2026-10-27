@@ -1,0 +1,4 @@
+dataset,tick_s,represented_trips,distinct_sequences,median_recorded_fixes,median_distinct_cells
+porto,15,12253,12253,41.0,16.0
+geolife,30,4685,4403,417.0,14.0
+tdrive,30,72667,56745,12.0,9.0
