@@ -138,7 +138,11 @@ def falling(n: np.ndarray, k: int) -> np.ndarray:
         out *= np.maximum(n - i, 0)
     return out
 
-def experiment_b(name, e_cells, e_kept, pool, trials, seed, min_trips=10, max_trips=30, device=False) -> List[Dict]:
+def experiment_b(name, e_cells, e_kept, pool, trials, seed, min_trips=10, max_trips=30, device=False,
+                 crn=False) -> List[Dict]:
+    """crn=True draws each trial's target and trips from a stream seeded by
+    (seed, K, trial), so per-trace and per-device runs with the same K use
+    common random targets (added 27 Oct 2026; default keeps the adopted runs)."""
     rng = np.random.default_rng(seed)
     by_user: Dict[str, List[int]] = defaultdict(list)
     for i, tr in enumerate(e_kept):
@@ -175,11 +179,12 @@ def experiment_b(name, e_cells, e_kept, pool, trials, seed, min_trips=10, max_tr
             alloc = [B // K + (i < B % K) for i in range(K)] if device else [B] * K
             bound = B if device else K * B
             h_post, maxpost, hit = [], [], []
-            for _ in range(trials):
-                truth = int(rng.integers(U))
+            for trial in range(trials):
+                trng = np.random.default_rng([seed, K, trial]) if crn else rng
+                truth = int(trng.integers(U))
                 mine = np.flatnonzero(owner == truth)
                 assert len(mine) >= K, "min_trips must be at least K"
-                picked = rng.choice(mine, K, replace=False)
+                picked = trng.choice(mine, K, replace=False)
                 logpost = np.zeros(U)
                 consistent = []
                 for t, b_t in zip(picked, alloc):
@@ -245,6 +250,8 @@ def main() -> None:
     ap.add_argument("--pool", type=int, default=400)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--only-b", action="store_true", help="rerun Experiment B only")
+    ap.add_argument("--crn", action="store_true",
+                    help="common random targets across budget scopes; writes results/n5_bounds_users*_crn.csv")
     ap.add_argument("--device", action="store_true",
                     help="Experiment B with a per-device budget; writes results/n5_bounds_users_device.csv")
     ap.add_argument("--geolife-users-b", type=int, default=0,
@@ -268,7 +275,7 @@ def main() -> None:
         write(rows_a, "results/n5_bounds_charging.csv")
 
     print("Experiment B: leakage about the person over K traces")
-    rows_b = experiment_b("porto", p_cells, p_kept, p_pool, a.trials, a.seed, device=a.device)
+    rows_b = experiment_b("porto", p_cells, p_kept, p_pool, a.trials, a.seed, device=a.device, crn=a.crn)
     users_b = sorted(files, key=lambda u: -len(files[u]))
     if a.geolife_users_b:
         users_b = users_b[:a.geolife_users_b]
@@ -277,8 +284,9 @@ def main() -> None:
         gb_cells, gb_kept, gb_pool = _setup(geo_b, BEIJING_WIN, 30, 120, a.seed, a.pool)
     else:
         gb_cells, gb_kept, gb_pool = g_cells, g_kept, g_pool
-    rows_b += experiment_b("geolife", gb_cells, gb_kept, gb_pool, a.trials, a.seed, device=a.device)
-    write(rows_b, "results/n5_bounds_users_device.csv" if a.device else "results/n5_bounds_users.csv")
+    rows_b += experiment_b("geolife", gb_cells, gb_kept, gb_pool, a.trials, a.seed, device=a.device, crn=a.crn)
+    suffix = "_crn" if a.crn else ""
+    write(rows_b, f"results/n5_bounds_users_device{suffix}.csv" if a.device else f"results/n5_bounds_users{suffix}.csv")
 
     bad = [r for r in rows_a + rows_b if not r["within_bound"]]
     print(f"bound violations: {len(bad)} of {len(rows_a) + len(rows_b)} settings")
