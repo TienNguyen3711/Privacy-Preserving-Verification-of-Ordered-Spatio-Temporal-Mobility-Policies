@@ -28,8 +28,8 @@ protection are implemented for a trusted independent ledger; see
 | Part | Claim / baseline it serves | Status |
 |---|---|---|
 | `rust/.../src/ordered.rs` | Our design, claim **N1** (order + relative time) | Working, tested, Groth16 end-to-end, exact cost formula |
-| `rust/.../src/automaton.rs` | Baseline **B3** (discretise + DFA, Reef / zkreg style) | Working, 4-symbol DFA (overlapping zones), exact cost formula |
-| `rust/.../src/commit.rs` | Binding (B2) or **hiding** commitment to the signed trace | Poseidon(r ‖ T) with 128-bit blinding |
+| `rust/.../src/automaton.rs` | Baseline **B3** (= BL-bucket in the manuscript; discretise + DFA, Reef / zkreg style) | Working, 4-symbol DFA (overlapping zones), exact cost formula |
+| `rust/.../src/commit.rs` | Binding (B2 = BL-sig in the manuscript) or **hiding** commitment to the signed trace | Poseidon(r ‖ T) with 128-bit blinding |
 | `rust/.../src/io.rs`, `bin/prove_json.rs` | Python → JSON → Rust bridge | Proves policies on real traces |
 | `rust/.../bin/n1_real.rs` | N1 on real data | `results/n1_real_*.csv` |
 | `rust/.../bin/pilot_n1.rs` | N1 pilot (synthetic) | `results/pilot_n1.csv` |
@@ -38,7 +38,7 @@ protection are implemented for a trusted independent ledger; see
 | `rust/.../bin/budget_demo.rs`, `keygen_bench.rs` | Budget protocol on a real trace; provisioning cost | `results/n5_budget_protocol.csv`, `n5_scan_cost.csv`, `keygen_bench.csv` |
 | `rust/.../src/sigbench.rs`, `bin/sig_bench.rs` | Hidden-signature microbenchmark: Lamport vs WOTS (w = 4, 16, tweaked) × Poseidon width | `results/sig_bench.csv` |
 | `python/zkmob/slh_dsa_estimate.py` | In-circuit cost estimate for SLH-DSA (FIPS 205) | `results/slh_dsa_estimate.csv` |
-| `zkvm/` (RISC Zero 3.0.6) | **Step 7a: end-to-end PQ, zero-knowledge proof** of the budgeted, unlinkable relation (SHA-256 instantiation) | Working, tested; `results/zkvm_budget.csv` |
+| `zkvm/` (RISC Zero 3.0.6) | **Step 7a: full-relation PQ-oriented STARK instantiation; privacy conditional on A-STARK** of the budgeted, unlinkable relation (SHA-256 instantiation) | Working, tested; `results/zkvm_budget.csv` |
 | `stark/` (Plonky3, pinned commit) | **Step 7b: hand-written ZK STARK components**: policy scan table + Poseidon2 hash workload | Scan working and tested; tables not yet linked; `results/stark_bench.csv` |
 | `python/zkmob/n5_bounds.py` | N5 formal model on real data: leakage vs charging rule (exact) and per-person leakage over K traces | `results/n5_bounds_charging.csv`, `n5_bounds_users.csv` |
 | `python/zkmob/n5_budget.py` | Anonymity set vs budget B, charging all answers vs yes-only | `results/n5_budget.csv` |
@@ -92,10 +92,11 @@ they are check-in data, not trajectories, and are not used yet.)
 
 ## Post-quantum back ends (step 7)
 
-Both use only hash functions (no pairings, no trusted setup) and run in a
-zero-knowledge mode.
+**Timing provenance:** numerical tables below retain historical development-run values; they are not the adopted manuscript measurements. Use [rerun provenance](results/rerun_provenance.json) to identify the adopted result files. The 12 October audit folder (`reviews/2026-10-12/`) is no longer present. The manuscript reports approximately 25 s for 128-fix RISC Zero traces; the supplement reports 8.8 + 29.5 = 38.3 ms for the incomplete, unlinked Plonky3 components. Later session-namespace integration tests are documented separately in [WALLET_STORAGE.md](WALLET_STORAGE.md), not folded into historical benchmark timings.
 
-**7a. RISC Zero zkVM, end to end** (`zkvm/`). The whole budgeted, unlinkable
+Both use hash-based backends (no pairings or trusted setup) configured in a zero-knowledge mode. This configuration does not establish the adaptive multi-theorem zero-knowledge assumption A-STARK for RISC Zero. Quantum unlinkability also has an unbounded nullifier-simulation error term; no measured backend is established here to provide both PQ evidence security and the claimed privacy guarantees without these assumptions. See the manuscript and supplement for the precise conditional statements.
+
+**7a. RISC Zero zkVM, full relation with conditional privacy** (`zkvm/`). The whole budgeted, unlinkable
 relation (`zkvm/core`: hiding commitment, Lamport one-time signature, epoch and
 registry Merkle paths, policy scan with yes/no outcome, slot < B, nullifier)
 runs as a guest program. Every hash is SHA-256, which the zkVM accelerates.
@@ -129,9 +130,7 @@ BabyBear, Keccak Merkle commitments, `new_benchmark_zk` FRI: blowup 4,
   the native relation; the opposite outcome never verifies. Hiding FRI with
   100 queries needs at least 256 rows, so short traces are padded with inactive
   rows, which also hides the exact number of fixes.
-* The relation's hash workload as Poseidon2 permutations (width 16):
-  commitment + Lamport on a 248-bit digest + 30 Merkle levels + nullifier
-  (826 permutations at n = 128).
+* A separate Poseidon2 hash workload (width 16), representing commitment and Merkle-path work. It omits Lamport verification and is not linked to the scan.
 
 | n | Scan: prove / verify / proof | Poseidon2 workload: prove / verify / proof | Sum (not linked) |
 |---|---|---|---|
@@ -143,20 +142,17 @@ BabyBear, Keccak Merkle commitments, `new_benchmark_zk` FRI: blowup 4,
 proof of the full relation needs a sponge table that chains Poseidon2 states,
 Lamport bit selection and Merkle chaining, linked to the scan table by
 cross-table lookups (Plonky3 `batch-stark` + LogUp, which supports ZK). So
-the "sum" row is an estimate of the composed proof, not a measurement. The
-RISC Zero result is the complete end-to-end PQ proof today.
+the "sum" column only adds measurements of incomplete, unlinked components; it is not an estimate or measurement of a composed proof. The RISC Zero guest implements the full relation, with the conditional security scope stated above.
 
-Comparison at n = 128 for the budgeted, unlinkable relation:
+Historical backend measurements at n = 128 (the Plonky3 row contains incomplete components, not the full relation):
 
-| Back end | PQ | Setup | Prove | Verify | Proof |
+| Back end | PQ status | Setup | Prove | Verify | Proof |
 |---|---|---|---|---|---|
 | Groth16 / BN254 (arkworks) | no | trusted, per circuit | 1.4 s | 1.3 ms | 128 B |
-| RISC Zero (STARK, SHA-256) | yes | none | 23 s | 9 ms | 224 kB |
-| Plonky3 AIR (STARK, Poseidon2), components | yes | none | ≈ 47 ms | ≈ 4 ms | ≈ 585 kB |
+| RISC Zero (STARK, SHA-256) | oriented; privacy conditional | none | 23 s | 9 ms | 224 kB |
+| Plonky3 AIR (STARK, Poseidon2), components | incomplete | none | ≈ 47 ms | ≈ 4 ms | ≈ 585 kB |
 
-The PQ price is proof size (about 1,700 to 4,600× larger than Groth16), not
-necessarily prover time: the hand-written STARK components are about 30× faster
-than Groth16, and the zkVM about 16× slower (generality overhead).
+The complete zkVM relation has higher proving time and proof size than the Groth16 implementation. The component timings do not measure a complete alternative and cannot establish its speedup over Groth16.
 
 ## Run it
 
@@ -184,6 +180,8 @@ for ds in geolife tdrive porto; do
   cargo run --release --manifest-path $M --bin n1_real -- --in work/n1_$ds.jsonl --out results/n1_real_$ds.csv
 done
 PYTHONPATH=python python3 -m zkmob.n1_report
+# Defaults select only n1_real_{geolife,porto,tdrive}.csv; do not use a broad
+# shell glob that also selects archived *.before_rr.csv files.
 # like-for-like costs and error split (paper Fig. 2, Tables S-II and S-III)
 PYTHONPATH=python python3 -m zkmob.n1_fair
 # robustness: grid zones and round windows, not anchored on the trace (Table S-IV)
@@ -247,10 +245,12 @@ python3 scripts/results_figs.py OUT_DIR
   trace commitment (`EpochKey::sign` only moves forward). Reusing a leaf
   would allow forgeries. Epoch numbers are strictly increasing and checked
   by the registry.
-* Budget assumptions: the verifier id V is authenticated (otherwise Sybil
-  verifiers each get B answers); the device commits to each trace exactly
-  once (a fresh r would reset the budget); the nullifier has no epoch, so
-  the budget never resets.
+* Budget assumptions: the verifier id V is certified (otherwise Sybil
+  verifiers each get B answers). The nullifier N = H(k_D ‖ V ‖ ρ ‖ j) binds
+  a presentation to the device budget key k_D, the verifier V, the budget
+  period ρ and a slot j < B. All trips of a device therefore share one budget
+  per verifier and period, the budget resets each period, and re-committing a
+  trace with a fresh r does not reset it (manuscript §IV-D).
 
 ## Real-data preprocessing (`datasets.py`)
 
@@ -267,6 +267,15 @@ fixes (T-Drive ≥ 10) and ≥ 10 min (Porto ≥ 5 min).
 | T-Drive | 300 s | 24 | 1.9 h |
 
 ## Results
+
+The narrative snapshots below are earlier development notes. Current results
+were adopted from the full 12 October 2026 rerun; use `results/`, and the revised
+manuscript/supplement for current measurements. The original rerun audit folder
+(`reviews/2026-10-11/numerical-rerun/`) is no longer present; the SHA-256
+hashes in `results/rerun_provenance.json` are the authoritative record of the
+adopted files, and its `host` field records the machine (Apple M5 Pro, 18 cores,
+64 GB).
+
 
 ### N1 pilot (synthetic): cost versus time precision
 
@@ -289,7 +298,12 @@ Both costs have exact closed forms, checked against synthesis in
 `cost_formulas_match_synthesis`:
 
 * ours: s(232 + 4n) + (s − 1)(bits(n) + 34) + 33·(gapped steps)
-* B3: (349 + k) + (L − 1)(356 + 5k), with L = T / w
+* B3: (189 + k) + (L − 1)(196 + 5k), with L = T / w (16-bit coordinates;
+  `b3_constraints` in `automaton.rs`, as in the manuscript)
+
+The pilot table above predates the current 16-bit coordinate encoding and was
+computed with the earlier formula (349 + k) + (L − 1)(356 + 5k). It is kept as
+a historical record; the manuscript's numbers come from the current code.
 
 Caveats that still hold: (1) the commitment (~262k constraints at n = 720)
 dominates the policy part, and any fair B3 must bind to the same signed trace
@@ -568,7 +582,7 @@ recent roots (small anonymity-set effects).
    (epoch subtrees). ~~N5 mechanism~~ done (scan + nullifier budget). ~~Signature
    microbenchmark and SLH-DSA estimate~~ done (keep Lamport). Still to do: the
    formal unlinkability and budget games.
-2. ~~**PQ back end (N3).**~~ End-to-end on RISC Zero done; Plonky3
+2. **PQ-oriented back end (N3).** Full relation on RISC Zero implemented, with A-STARK and quantum nullifier-simulation qualifications above; Plonky3
    components done. Remaining: link the Plonky3 tables into one proof.
    The original plan for this step was: Port `ordered.rs` to a hash-based STARK with a
    zero-knowledge (trace-masking) mode, and compare the three signature
@@ -582,3 +596,17 @@ recent roots (small anonymity-set effects).
 5. **Zones from real places** (OSM, or the Foursquare POIs already in
    `data/`) instead of trace-anchored boxes.
 6. **B1** (independent window-and-box proofs, Li et al. 2021).
+
+## Adopted rerun and maintenance corrections (12 October 2026)
+
+The two wallet harnesses now inspect lifetime-period state using `verifier/0`.
+The load summarizer uses the conventional median and explicitly records
+`n_points: 32`; run `python3 python/benchmarks/delta_under_load.py --summarize`
+to regenerate it without rerunning proofs.
+
+The raw rerun folder `../reviews/2026-10-11/numerical-rerun/` is no longer present.
+`results/rerun_provenance.json` records adopted files and their origin. Paths
+to private test artifacts in copied smoke-test JSON refer to the isolated
+rerun's `code/` directory, where those artifacts remain; they are not
+relocated into the production workspace. Earlier outputs are backed up
+under `../reviews/2026-10-12/rerun-update/before/code/results/`.
