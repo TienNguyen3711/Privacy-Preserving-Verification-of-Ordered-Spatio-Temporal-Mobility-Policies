@@ -78,6 +78,22 @@ struct State {
     scopes: BTreeMap<String, Scope>,
 }
 
+/// Which recorded trip a request is about (paper: statement classes).
+///
+/// Only the existential class E ("some recorded trip satisfies the policy")
+/// is supported, and in it the HOLDER chooses the trip. The index is
+/// holder-local input and must never be taken from a verifier: a
+/// verifier-named index would link every request about the same trip by
+/// itself, and an unknown index would reveal how many trips the wallet holds.
+/// The specific-trip class S (a verifier-chosen time window or observation,
+/// proven inside the guest) and the all-trips class A need changes to the
+/// proven relation and are added with them (plan items 6 and 15).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Handle {
+    /// E class: the holder's choice among its own trips.
+    Owner(u32),
+}
+
 pub struct Reservation { pub trace: u32, pub slot: u32, pub response: Option<Vec<u8>>, pub expired: bool, pub deadline_ms: u64 }
 
 pub struct Wallet {
@@ -362,12 +378,13 @@ impl Wallet {
     /// caller. Persist before policy evaluation, proof generation or release.
     /// None = exhausted. Same ID/context = retry, even after exhaustion.
     pub fn reserve(&mut self, id: &str, st: &Statement) -> io::Result<Option<Reservation>> {
-        self.reserve_for(id, st, 0)
+        self.reserve_for(id, st, Handle::Owner(0))
     }
 
-    /// Reserve a slot for a query about trace `trace`. Slots belong to the
-    /// device and verifier, not to the trace.
-    pub fn reserve_for(&mut self, id: &str, st: &Statement, trace: u32) -> io::Result<Option<Reservation>> {
+    /// Reserve a slot for a query about the trip named by `handle`. Slots
+    /// belong to the device and verifier, not to the trip.
+    pub fn reserve_for(&mut self, id: &str, st: &Statement, handle: Handle) -> io::Result<Option<Reservation>> {
+        let Handle::Owner(trace) = handle;
         self.ensure_current()?;
         if id.is_empty() || id.len() > 1024 { return Err(invalid("invalid request id")); }
         if st.budget != self.state.budget || st.reg_root != self.state.traces[0].reg_root {

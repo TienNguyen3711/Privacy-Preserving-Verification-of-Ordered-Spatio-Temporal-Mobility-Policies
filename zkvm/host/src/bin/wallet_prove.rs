@@ -21,7 +21,7 @@
 //! before retry/period lookup, reservation, expiry and completion. Legacy
 //! plaintext fixtures without a session file retain the old unscoped API.
 use std::{error::Error, io::Write, path::Path, sync::mpsc, time::Duration};
-use host::{setup_randomized_local, load_trace_nth, wallet::Wallet, vault, anchor::Anchor, H};
+use host::{setup_randomized_local, load_trace_nth, wallet::{Handle, Wallet}, vault, anchor::Anchor, H};
 use host::registry::{sign_with_device_file, PublishedRegistry};
 use methods::{ZKMOB_GUEST_ELF, ZKMOB_GUEST_ID};
 use risc0_zkvm::{default_prover, ExecutorEnv, InnerReceipt, ProverOpts, Receipt};
@@ -211,8 +211,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     // A retry keeps its original period; a fresh request uses the current one.
     let period = match wallet.request_period(id, &verifier) { Some(p) => p, None => wallet.current_period()? };
     let st = Statement { policy, reg_root: wallet.signed().reg_root, verifier, budget: wallet.budget(), period };
-    let trace: u32 = get("--trace").map(|t| t.parse()).unwrap_or(Ok(0))?;
-    let Some(reservation) = wallet.reserve_for(id, &st, trace)? else {
+    // E class: the holder picks which of its trips to present. Never pass a
+    // verifier-supplied index here (it would link requests about one trip and
+    // reveal the trip count); verifier-anchored trips are not supported yet.
+    if args.iter().any(|s| s == "--trace") {
+        return Err("--trace was renamed --owner-trace: the trip is the holder's choice, never the verifier's".into());
+    }
+    let trace: u32 = get("--owner-trace").map(|t| t.parse()).unwrap_or(Ok(0))?;
+    let Some(reservation) = wallet.reserve_for(id, &st, Handle::Owner(trace))? else {
         println!("exhausted");
         return Ok(());
     };
