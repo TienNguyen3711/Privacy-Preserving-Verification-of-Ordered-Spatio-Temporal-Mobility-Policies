@@ -23,7 +23,7 @@ fn traces_of_one_device_share_the_budget() {
     let mfr = Manufacturer::generate().unwrap();
     let (mut a, ra) = Device::provision(&mfr, 3).unwrap();
     let (mut b, rb) = Device::provision(&mfr, 3).unwrap();
-    let reg = Registry::build(mfr.public_key(), 6, vec![ra, rb]).unwrap();
+    let reg = Registry::build(mfr.public_key(), 6, vec![ra, rb]).unwrap().publish();
     let (a1, a2, b1) = (a.sign_trace(&reg, trip(0)).unwrap(), a.sign_trace(&reg, trip(7)).unwrap(), b.sign_trace(&reg, trip(0)).unwrap());
 
     let mut w = Wallet::create(&t.0.join("w"), a1, 3).unwrap();
@@ -76,7 +76,7 @@ fn budget_renews_per_period_only_on_the_wallet_clock() {
     let t = Temp::new();
     let mfr = Manufacturer::generate().unwrap();
     let (mut a, ra) = Device::provision(&mfr, 3).unwrap();
-    let reg = Registry::build(mfr.public_key(), 6, vec![ra]).unwrap();
+    let reg = Registry::build(mfr.public_key(), 6, vec![ra]).unwrap().publish();
     let mut w = Wallet::create(&t.0.join("w"), a.sign_trace(&reg, trip(0)).unwrap(), 2).unwrap();
     w.set_period_len(2).unwrap();
     let st = |p: u32| Statement { policy: policy_between(&trip(0), 1, 6, 2.0), reg_root: reg.root, verifier: sha(&[b"v"]), budget: 2, period: p };
