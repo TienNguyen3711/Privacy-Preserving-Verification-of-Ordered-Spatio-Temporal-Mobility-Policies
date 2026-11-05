@@ -71,6 +71,40 @@ fn accepts_each_slot_once_and_rejects_mismatched_statements() {
     assert_eq!(v.accept_journal(&journal(&st9, &signed.witness(0)), &policy, 9), Ok(true));
 }
 
+/// `CompositeReceipt` is non-exhaustive and has no public constructor; an
+/// empty one is enough here because the kind check runs before verification.
+fn empty_composite() -> risc0_zkvm::CompositeReceipt {
+    let zero = serde_json::to_value(risc0_zkvm::sha::Digest::ZERO).unwrap();
+    serde_json::from_value(serde_json::json!({ "segments": [], "assumption_receipts": [], "verifier_parameters": zero })).unwrap()
+}
+
+/// Receipts of every non-succinct kind, carrying an honest journal for the
+/// right image, are refused before verification. A Groth16 receipt would
+/// otherwise verify classically (not post-quantum), a composite one reveals
+/// its segment count, and a fake one verifies whenever RISC0_DEV_MODE is set.
+#[test]
+fn refuses_every_receipt_kind_except_succinct() {
+    use risc0_zkvm::{sha::Digest, FakeReceipt, Groth16Receipt, InnerReceipt, Receipt, ReceiptClaim};
+    let traj = trace();
+    let signed = setup_fixture(traj.clone(), 3, 6, 5);
+    let id = sha(&[b"verifier-1"]);
+    let policy = policy_between(&traj, 5, 20, 1.5);
+    let st = Statement { policy: policy.clone(), reg_root: signed.reg_root, verifier: id, budget: B, period: 0 };
+    let journal = default_executor().execute(env(&st, &signed.witness(0)), ZKMOB_GUEST_ELF).unwrap().journal.bytes;
+    let claim = || ReceiptClaim::ok(methods::ZKMOB_GUEST_ID, journal.clone());
+
+    let receipts = [
+        ("fake", InnerReceipt::Fake(FakeReceipt::new(claim()))),
+        ("Groth16", InnerReceipt::Groth16(Groth16Receipt::new(vec![0u8; 256], claim().into(), Digest::ZERO))),
+        ("composite", InnerReceipt::Composite(empty_composite())),
+    ];
+    for (kind, inner) in receipts {
+        let mut v = Verifier::new(id, B, signed.reg_root);
+        assert_eq!(v.accept(&Receipt::new(inner, journal.clone()), &policy, 0), Err(Reject::ReceiptKind(kind)));
+        assert_eq!(v.accepted(), 0, "a refused receipt records no nullifier");
+    }
+}
+
 #[test]
 #[ignore = "proves a real receipt (about 25 s)"]
 fn real_receipt_is_accepted_once() {

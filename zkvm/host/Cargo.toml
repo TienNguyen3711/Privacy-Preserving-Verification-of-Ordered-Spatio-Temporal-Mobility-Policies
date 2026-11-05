@@ -23,3 +23,6 @@ ml-dsa = "0.1.1"
 [features]
 # Explicit opt-in for subprocess crash tests; absent from normal builds.
 fault-injection = []
+# Deployment builds: compile risc0's dev mode out, so a stray RISC0_DEV_MODE
+# can neither fake a proof nor make a fake receipt verify (it panics instead).
+production = ["risc0-zkvm/disable-dev-mode"]
