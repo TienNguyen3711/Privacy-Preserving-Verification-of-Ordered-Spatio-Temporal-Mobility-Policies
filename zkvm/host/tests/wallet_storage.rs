@@ -248,3 +248,48 @@ fn request_cost_does_not_grow_with_stored_receipts() {
     for i in 0..50 { if w.reserve(&format!("r{i}"), &st).is_err() { failed += 1; } }
     assert_eq!(failed, 1, "exactly the altered receipt fails closed");
 }
+
+#[test]
+fn session_namespaces_isolate_cache_but_share_budget_after_restart() {
+    let t = Temp::new();
+    let a = t.0.join("session-a");
+    let b = t.0.join("session-b");
+    host::session::create(&a).unwrap();
+    host::session::create(&b).unwrap();
+    assert!(host::session::create(&a).is_err(), "cannot replace an existing session");
+    let id_a = host::session::request_key(&a, "verifier-chosen-id").unwrap();
+    let id_b = host::session::request_key(&b, "verifier-chosen-id").unwrap();
+    assert_ne!(id_a, id_b);
+    let mut w = create(&t, 2);
+    let st = statement(&w);
+    assert_eq!(w.reserve(&id_a, &st).unwrap().unwrap().slot, 0);
+    w.complete(&id_a, &st, b"opaque-storage-test-receipt".to_vec()).unwrap();
+    drop(w);
+    let mut w = Wallet::open(&t.wallet()).unwrap();
+    let retry = host::session::request_key(&a, "verifier-chosen-id").unwrap();
+    assert_eq!(w.request_period(&retry, &st.verifier), Some(0));
+    assert_eq!(w.reserve(&retry, &st).unwrap().unwrap().response.unwrap(), b"opaque-storage-test-receipt");
+    assert_eq!(w.request_period(&id_b, &st.verifier), None);
+    let second = w.reserve(&id_b, &st).unwrap().unwrap();
+    assert_eq!(second.slot, 1);
+    assert!(second.response.is_none(), "cross-session ID must not retrieve cached receipt");
+    w.expire(&id_b, &st).unwrap();
+    assert!(w.reserve(&id_b, &st).unwrap().unwrap().expired);
+    let third = t.0.join("session-c");
+    host::session::create(&third).unwrap();
+    let id_c = host::session::request_key(&third, "verifier-chosen-id").unwrap();
+    assert!(w.reserve(&id_c, &st).unwrap().is_none(), "new session cannot reset device budget");
+    assert_eq!(w.spent(&st), 2);
+}
+
+#[test]
+fn session_rejects_invalid_ids_and_public_session_files() {
+    use std::os::unix::fs::PermissionsExt;
+    let t = Temp::new();
+    let file = t.0.join("session");
+    host::session::create(&file).unwrap();
+    assert!(host::session::request_key(&file, "").is_err());
+    assert!(host::session::request_key(&file, &"x".repeat(1025)).is_err());
+    std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o644)).unwrap();
+    assert!(host::session::request_key(&file, "request").is_err());
+}

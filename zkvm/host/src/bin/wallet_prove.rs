@@ -15,11 +15,11 @@
 //! after a crash cannot release early. A resumed pending request keeps its
 //! original deadline.
 //!
-//! `--request-id` names a session of the HOLDER and must be chosen by the
-//! holder (fresh per session, reused only to resume that session). Never pass
-//! a verifier-chosen identifier: a repeated identifier returns the cached
-//! proof, so a verifier that reuses one across sessions could link them
-//! (paper, Definition 3 scopes identifiers by handle for this reason).
+//! Protected mode requires a holder-created `--session-file`. Create it with
+//! `--new-session FILE`, keep it local, and reuse it only within that session.
+//! `--request-id` may then come from the verifier: cache keys are namespaced
+//! before retry/period lookup, reservation, expiry and completion. Legacy
+//! plaintext fixtures without a session file retain the old unscoped API.
 use std::{error::Error, io::Write, path::Path, sync::mpsc, time::Duration};
 use host::{setup_randomized_local, load_trace_nth, wallet::Wallet, vault, anchor::Anchor, H};
 use host::registry::{sign_with_device_file, Registry};
@@ -103,6 +103,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     if args.iter().any(|s| s == "--generate-key") {
         vault::generate_key(Path::new(get("--generate-key")?))?;
         println!("generated private key file (keep outside wallet backups)");
+        return Ok(());
+    }
+    if args.iter().any(|s| s == "--new-session") {
+        host::session::create(Path::new(get("--new-session")?))?;
+        println!("created private holder session file");
         return Ok(());
     }
     let path = Path::new(get("--wallet")?);
@@ -191,7 +196,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let mut verifier = [0u8; 32];
     for (i, byte) in verifier.iter_mut().enumerate() { *byte = u8::from_str_radix(&v[2*i..2*i+2], 16)?; }
-    let id = get("--request-id")?;
+    let raw_id = get("--request-id")?;
+    let scoped_id = if args.iter().any(|s| s == "--session-file") {
+        host::session::request_key(Path::new(get("--session-file")?), raw_id)?
+    } else if legacy {
+        raw_id.to_owned() // Explicit legacy fixtures only; no session privacy claim.
+    } else {
+        return Err("protected queries require a holder-created --session-file (use --new-session FILE)".into());
+    };
+    let id = scoped_id.as_str();
     let mut wallet = if let Some(key) = &key {
         Wallet::open_protected(path, **key, service()?)?
     } else { Wallet::open(path)? }; // lock stays held through response output
