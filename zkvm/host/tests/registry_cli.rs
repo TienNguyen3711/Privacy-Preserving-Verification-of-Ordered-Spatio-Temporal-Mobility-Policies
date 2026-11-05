@@ -120,3 +120,22 @@ fn cli_enrolment_keeps_device_secrets_on_the_device() {
     let o = reg(&["device".as_ref(), "--manufacturer".as_ref(), p("mfr.secret").as_os_str(), "--out".as_ref(), p("old.secret").as_os_str(), "--request".as_ref(), p("old.req").as_os_str()]);
     assert!(!o.status.success() && !p("old.secret").exists());
 }
+
+/// The trip a request is about is the holder's choice (`--owner-trace`); the
+/// old `--trace` flag, which callers could fill from a verifier request, is
+/// refused before any slot is reserved.
+#[test]
+fn trip_selection_flag_is_holder_only() {
+    let t = Temp::new();
+    let (_dev, _reg, traces) = setup(&t);
+    assert!(init(&t, "w", &traces, &["--local-registry".as_ref()]).status().unwrap().success());
+    let policy = t.0.join("pol.json");
+    fs::write(&policy, r#"{"steps":[{"zone":{"xmin":0,"xmax":4294967295,"ymin":0,"ymax":4294967295},"max_gap":null}],"avoid":null}"#).unwrap();
+    let out = Command::new(env!("CARGO_BIN_EXE_wallet_prove"))
+        .args(["--legacy-plaintext", "--wallet"]).arg(t.0.join("w")).arg("--policy").arg(&policy)
+        .args(["--request-id", "r", "--verifier", &"07".repeat(32), "--trace", "0"]).output().unwrap();
+    assert!(!out.status.success());
+    assert!(String::from_utf8_lossy(&out.stderr).contains("--owner-trace"));
+    let state: serde_json::Value = serde_json::from_slice(&fs::read(t.0.join("w/state.json")).unwrap()).unwrap();
+    assert!(state["scopes"].as_object().unwrap().is_empty(), "no slot reserved");
+}

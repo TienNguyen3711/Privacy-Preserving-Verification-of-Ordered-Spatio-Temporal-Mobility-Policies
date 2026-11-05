@@ -1,7 +1,7 @@
 //! Device-level budget (review RR-11, 3 Oct 2026): every trace a device signs
 //! shares one budget of B answers per verifier.
 use std::{path::PathBuf, time::{SystemTime, UNIX_EPOCH}};
-use host::{policy_between, registry::{Device, Manufacturer, Registry}, sha, wallet::Wallet, H};
+use host::{policy_between, registry::{Device, Manufacturer, Registry}, sha, wallet::{Handle, Wallet}, H};
 use zkmob_core::{check, device_tag, Point, Statement};
 
 struct Temp(PathBuf);
@@ -33,15 +33,15 @@ fn traces_of_one_device_share_the_budget() {
     let st = |v: &[u8]| Statement { policy: policy_between(&trip(0), 1, 6, 2.0), reg_root: reg.root, verifier: sha(&[v]), budget: 3, period: 0 };
     let v1 = st(b"verifier-1");
     // Three answers about two different trips use the device's three slots...
-    let r0 = w.reserve_for("q0", &v1, 0).unwrap().unwrap();
-    let r1 = w.reserve_for("q1", &v1, 1).unwrap().unwrap();
-    let r2 = w.reserve_for("q2", &v1, 1).unwrap().unwrap();
+    let r0 = w.reserve_for("q0", &v1, Handle::Owner(0)).unwrap().unwrap();
+    let r1 = w.reserve_for("q1", &v1, Handle::Owner(1)).unwrap().unwrap();
+    let r2 = w.reserve_for("q2", &v1, Handle::Owner(1)).unwrap().unwrap();
     assert_eq!((r0.slot, r1.slot, r2.slot), (0, 1, 2));
     // ...and a fourth, about either trip, is refused.
-    assert!(w.reserve_for("q3", &v1, 0).unwrap().is_none());
-    assert!(w.reserve_for("q4", &v1, 1).unwrap().is_none());
+    assert!(w.reserve_for("q3", &v1, Handle::Owner(0)).unwrap().is_none());
+    assert!(w.reserve_for("q4", &v1, Handle::Owner(1)).unwrap().is_none());
     // Another verifier has its own budget.
-    assert_eq!(w.reserve_for("p0", &st(b"verifier-2"), 1).unwrap().unwrap().slot, 0);
+    assert_eq!(w.reserve_for("p0", &st(b"verifier-2"), Handle::Owner(1)).unwrap().unwrap().slot, 0);
 
     // The relation accepts both trips under the shared root, and nullifiers
     // depend on (device key, verifier, slot) only: distinct per slot.
