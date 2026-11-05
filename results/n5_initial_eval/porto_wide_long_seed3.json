@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "config": {
-    "input": "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl",
-    "out": "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_wide_long_seed3.csv",
+    "input": "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl",
+    "out": "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_wide_long_seed3.csv",
     "candidates": 64,
     "zones": 6,
     "half_side": 500,
@@ -37375,17 +37375,16 @@
                   60,
                   62
                 ],
-                "query": 11,
+                "query": 5,
                 "no": {
                   "candidates": [
-                    3,
                     6,
                     8,
                     17,
                     19,
                     26,
+                    28,
                     30,
-                    48,
                     54,
                     57,
                     60,
@@ -37409,32 +37408,33 @@
                   },
                   "yes": {
                     "candidates": [
-                      3,
-                      48
+                      28
                     ],
                     "query": null
                   }
                 },
                 "yes": {
                   "candidates": [
+                    3,
                     5,
                     10,
                     23,
-                    28,
+                    48,
                     53
                   ],
-                  "query": 5,
+                  "query": 3,
                   "no": {
                     "candidates": [
-                      28
+                      5,
+                      10,
+                      23,
+                      48
                     ],
                     "query": null
                   },
                   "yes": {
                     "candidates": [
-                      5,
-                      10,
-                      23,
+                      3,
                       53
                     ],
                     "query": null
@@ -39885,17 +39885,16 @@
                   60,
                   62
                 ],
-                "query": 11,
+                "query": 5,
                 "no": {
                   "candidates": [
-                    3,
                     6,
                     8,
                     17,
                     19,
                     26,
+                    28,
                     30,
-                    48,
                     54,
                     57,
                     60,
@@ -39919,32 +39918,33 @@
                   },
                   "yes": {
                     "candidates": [
-                      3,
-                      48
+                      28
                     ],
                     "query": null
                   }
                 },
                 "yes": {
                   "candidates": [
+                    3,
                     5,
                     10,
                     23,
-                    28,
+                    48,
                     53
                   ],
-                  "query": 5,
+                  "query": 3,
                   "no": {
                     "candidates": [
-                      28
+                      5,
+                      10,
+                      23,
+                      48
                     ],
                     "query": null
                   },
                   "yes": {
                     "candidates": [
-                      5,
-                      10,
-                      23,
+                      3,
                       53
                     ],
                     "query": null
@@ -42395,17 +42395,16 @@
                   60,
                   62
                 ],
-                "query": 11,
+                "query": 5,
                 "no": {
                   "candidates": [
-                    3,
                     6,
                     8,
                     17,
                     19,
                     26,
+                    28,
                     30,
-                    48,
                     54,
                     57,
                     60,
@@ -42429,32 +42428,33 @@
                   },
                   "yes": {
                     "candidates": [
-                      3,
-                      48
+                      28
                     ],
                     "query": null
                   }
                 },
                 "yes": {
                   "candidates": [
+                    3,
                     5,
                     10,
                     23,
-                    28,
+                    48,
                     53
                   ],
-                  "query": 5,
+                  "query": 3,
                   "no": {
                     "candidates": [
-                      28
+                      5,
+                      10,
+                      23,
+                      48
                     ],
                     "query": null
                   },
                   "yes": {
                     "candidates": [
-                      5,
-                      10,
-                      23,
+                      3,
                       53
                     ],
                     "query": null
