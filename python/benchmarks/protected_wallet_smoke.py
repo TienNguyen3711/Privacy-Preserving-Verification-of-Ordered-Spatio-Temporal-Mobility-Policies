@@ -12,11 +12,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output-dir', type=Path, default=ROOT/'results')
+    output = parser.parse_args().output_dir
+    output.mkdir(parents=True, exist_ok=True)
     if 'RISC0_DEV_MODE' in os.environ:
         raise RuntimeError('unset RISC0_DEV_MODE')
     private = Path(tempfile.mkdtemp(prefix='protected-wallet-', dir=ROOT/'work'))
     binary = ROOT/'zkvm/target/release/wallet_prove'
     script = ROOT/'python/zkmob/anchor_service.py'
+    subprocess.run([str(binary), '--new-session', str(private/'session')], check=True)
+    subprocess.run([str(binary), '--new-session', str(private/'session-b')], check=True)
     for name in ('key', 'short-key', 'token'):
         subprocess.run([str(binary), '--generate-key', str(private/name)], check=True)
     subprocess.run(['python3', str(script), '--init', '--state-dir', str(private/'ledger')], check=True)
@@ -27,11 +34,12 @@ def main():
         opts = ['--anchor-token', str(private/'token'),
                 '--anchor-url', f'http://127.0.0.1:{port}', '--allow-loopback-http']
         rows = []
-        def run(label, args, success=True, wallet='wallet'):
+        def run(label, args, success=True, wallet='wallet', session='session'):
             start = time.perf_counter()
             # Each wallet has its own key and hence its own ledger identity.
             key = ['--key-file', str(private/('short-key' if wallet == 'short' else 'key'))]
-            p = subprocess.run([str(binary), '--wallet', str(private/wallet), *opts, *key, *args], capture_output=True, timeout=180)
+            session_args = ['--session-file', str(private/session)] if session else []
+            p = subprocess.run([str(binary), '--wallet', str(private/wallet), *opts, *key, *session_args, *args], capture_output=True, timeout=180)
             assert (p.returncode == 0) == success, p.stderr.decode(errors='replace')
             if not success:
                 assert p.stdout == b'', f'{label}: failure leaked stdout bytes'
@@ -63,6 +71,8 @@ def main():
         assert run('restart_identical_no_receipt', no_query) == no_receipt
         run('changed_policy_rejected_empty_stdout', [*no_query[:2], *query[2:]], False)
         assert run('budget_exhausted', [*query[:-4], '--request-id', 'r2', '--verifier', '00'*31+'01']) == b'exhausted\n'
+        assert run('cross_session_id_cannot_retrieve_cached_receipt', query, session='session-b') == b'exhausted\n'
+        run('protected_query_without_session_rejected', query, False, session=None)
         assert not (private/'wallet/state.json').exists()
         # Fixed-latency release: fresh yes and no answers leave at admission + latency.
         by_case = {row['case']: row for row in rows}
@@ -108,8 +118,8 @@ def main():
         metadata = {'observations': rows, 'stable_identity_visible_to_ledger': True,
                     'new_answer_adds_two_commits': True, 'cached_retry_adds_no_commit': True,
                     'limits': 'Single local run; wall times and snapshot sizes are client/storage observations, not ledger timing measurements. No mutual-information estimate or timing classifier. Ledger request timing is not captured.'}
-        (ROOT/'results/wallet_metadata_observations.json').write_text(json.dumps(metadata, indent=2)+'\n')
-        (ROOT/'results/wallet_protection_smoke.json').write_text(json.dumps(result, indent=2)+'\n')
+        (output/'wallet_metadata_observations.json').write_text(json.dumps(metadata, indent=2)+'\n')
+        (output/'wallet_protection_smoke.json').write_text(json.dumps(result, indent=2)+'\n')
     finally:
         if service.poll() is None:
             service.terminate(); service.wait(timeout=10)

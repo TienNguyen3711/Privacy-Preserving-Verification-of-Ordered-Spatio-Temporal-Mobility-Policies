@@ -9,6 +9,7 @@ pub mod registry;
 pub mod vault;
 pub mod anchor;
 pub mod verifier;
+pub mod session;
 
 pub struct HostSha;
 

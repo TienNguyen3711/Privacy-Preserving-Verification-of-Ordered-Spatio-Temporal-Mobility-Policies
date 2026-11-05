@@ -126,10 +126,24 @@ recover with the ledger's budget, and rollback to an older snapshot fails
 closed (`results/power_loss_model.txt`). Not a physical power cut; storage
 that ignores F_FULLFSYNC is out of scope.
 
-Request IDs are holder-chosen session names: fresh per session, reused only
-to resume that session. Do not forward a verifier-chosen identifier; a cached
-retry returns the identical proof and nullifier, so a verifier reusing an
-identifier across sessions would link them (re-review F2).
+Protected queries require a holder-created private session file. Create one with
+`wallet_prove --new-session /private/path/session.key`, then supply
+`--session-file /private/path/session.key --request-id verifier-request-001`.
+Create a fresh file for each holder session; keep the same file for retries
+and requests within that session. The CLI derives a domain-separated HMAC-SHA256
+cache key before period lookup, reservation, completion and expiry. The file
+and derived cache key are not sent to the verifier. New sessions share the
+same device/verifier/period budget. Losing a session file prevents resuming
+its pending request; it does not refund the spent slot. Never let the verifier
+select session files or invoke the holder's local CLI options.
+
+`--legacy-plaintext` without a session file retains the old unscoped fixture
+interface and has no session-unlinkability claim. It can also use
+`--session-file` for scoped tests. The low-level Wallet API accepts already
+scoped internal IDs; other callers must perform the same trusted integration.
+The historical proof-time measurements predate this host-side change; the
+proof relation, witness and journal are unchanged. Namespace storage tests
+use opaque cached bytes and do not certify cryptographic unlinkability.
 
 Global registry (`registry` binary, `host/src/registry.rs`): a manufacturer
 ML-DSA key certifies device keys; devices sign (epoch, epoch root); the
