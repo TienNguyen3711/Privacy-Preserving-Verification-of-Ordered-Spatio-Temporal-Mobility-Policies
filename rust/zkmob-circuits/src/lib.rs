@@ -2,7 +2,8 @@
 //! spatio-temporal mobility policies (Paper 3 pilot).
 //!
 //! * `ordered`   – our selector-based design (claim N1)
-//! * `automaton` – baseline B3: discretise + DFA (Reef / zkreg style)
+//! * `automaton` – baseline B3: discretise + DFA (Reef / zkreg style), and
+//!                 BL-clockDFA: exact time, one clock per step, per fix
 //! * `commit`    – Poseidon commitment (binding B2, or hiding) to a signed trace
 //! * `io`        – JSON bridge from the Python data pipeline
 //!

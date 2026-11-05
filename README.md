@@ -28,7 +28,8 @@ protection are implemented for a trusted independent ledger; see
 | Part | Claim / baseline it serves | Status |
 |---|---|---|
 | `rust/.../src/ordered.rs` | Our design, claim **N1** (order + relative time) | Working, tested, Groth16 end-to-end, exact cost formula |
-| `rust/.../src/automaton.rs` | Baseline **B3** (= BL-bucket in the manuscript; discretise + DFA, Reef / zkreg style) | Working, 4-symbol DFA (overlapping zones), exact cost formula |
+| `rust/.../src/automaton.rs` | Baseline **B3** (= BL-bucket in the manuscript; discretise + DFA, Reef / zkreg style) and **BL-clockDFA** (exact time: one clock per step, one symbol per fix) | Working, 4-symbol DFA (overlapping zones); BL-clockDFA matches the reference on all 9,298 C1 policies; exact cost formulas |
+| `rust/.../bin/n1_clock.rs`, `python/zkmob/n1_policy_only.py` | C1 policy-only costs: selector, scan, BL-clockDFA, BL-bucket (review item 7) | `results/n1_clock_*.csv`, `n1_grid_clock_*.csv`, `n1_policy_only.csv` |
 | `rust/.../src/commit.rs` | Binding (B2 = BL-sig in the manuscript) or **hiding** commitment to the signed trace | Poseidon(r ‖ T) with 128-bit blinding |
 | `rust/.../src/io.rs`, `bin/prove_json.rs` | Python → JSON → Rust bridge | Proves policies on real traces |
 | `rust/.../bin/n1_real.rs` | N1 on real data | `results/n1_real_*.csv` |
@@ -190,6 +191,12 @@ for ds in geolife tdrive porto; do
   cargo run --release --manifest-path $M --bin n1_real -- --in work/n1_grid_$ds.jsonl --out results/n1_grid_$ds.csv
 done
 PYTHONPATH=python python3 -m zkmob.n1_fair --prefix n1_grid
+# exact-time automaton baseline and policy-only costs (review item 7)
+for ds in geolife tdrive porto; do
+  cargo run --release --manifest-path $M --bin n1_clock -- --in work/n1_$ds.jsonl --out results/n1_clock_$ds.csv
+  cargo run --release --manifest-path $M --bin n1_clock -- --in work/n1_grid_$ds.jsonl --out results/n1_grid_clock_$ds.csv
+done
+PYTHONPATH=python python3 -m zkmob.n1_policy_only
 
 # N5 on real data (about 40 seconds)
 PYTHONPATH=python python3 -m zkmob.n5_real
