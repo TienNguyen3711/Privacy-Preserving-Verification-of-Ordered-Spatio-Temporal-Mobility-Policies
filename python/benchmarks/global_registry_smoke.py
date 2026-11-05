@@ -100,14 +100,14 @@ def main():
             for i in range(len(trips)):
                 for pol in ('yes', 'no'):
                     out = sh(BIN / 'wallet_prove', '--legacy-plaintext', '--wallet', d / name, '--policy',
-                             d / f'{pol}.json', '--request-id', f'{pol}-{i}', '--verifier', VERIFIER, '--trace', i)
+                             d / f'{pol}.json', '--request-id', f'{pol}-{i}', '--verifier', VERIFIER, '--owner-trace', i)
                     (d / f'{name}-{i}-{pol}.bin').write_bytes(out)
                     view = json.loads(sh(reg, 'inspect-receipt', '--receipt', d / f'{name}-{i}-{pol}.bin'))
                     assert view['outcome'] == (pol == 'yes')
                     pres.append({'wallet': name, 'trip': f'{name}/{i}', 'device': device, 'view': view})
             # the device budget is shared by its trips: one more answer is refused
             assert sh(BIN / 'wallet_prove', '--legacy-plaintext', '--wallet', d / name, '--policy', d / 'yes.json',
-                      '--request-id', 'extra', '--verifier', VERIFIER, '--trace', 0) == b'exhausted\n'
+                      '--request-id', 'extra', '--verifier', VERIFIER, '--owner-trace', 0) == b'exhausted\n'
             return pres
 
         # Device 0 records two trips (one wallet); devices 1-3 one trip each.

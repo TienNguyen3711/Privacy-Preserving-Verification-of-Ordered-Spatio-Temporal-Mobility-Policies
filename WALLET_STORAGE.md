@@ -239,8 +239,12 @@ Review item RR-11 moved the budget from one trace to one device.
   gives the same nullifier.
 - One wallet per device (`WALLET_VERSION = 5`) holds `traces: Vec<SignedTrace>`
   and one slot counter per verifier for all of them. `--add-trace FILE` adds a
-  trace of the same device (others are refused); `--trace i` selects the trace
-  a request is about, and the reservation records it. The anchor identifier is
+  trace of the same device (others are refused); `--owner-trace i` selects the
+  trace a request is about, and the reservation records it. This is the
+  existential class: the HOLDER chooses the trip, so the index must never come
+  from the verifier (a verifier-named index would link requests about one trip
+  and an unknown index would reveal the trip count). The old `--trace` flag is
+  refused. Verifier-anchored trips need relation changes (plan item 6). The anchor identifier is
   `HMAC("zkmob/anchor-device/v1" || K_D)`.
 - Versions 1 to 4 are not migrated: their nullifiers are per trace.
 - Tests: `zkvm/host/tests/device_budget.rs`; Groth16: `rust/zkmob-circuits/tests/budget.rs`.
