@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "config": {
-    "input": "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl",
-    "out": "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_wide_long_seed4.csv",
+    "input": "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl",
+    "out": "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_wide_long_seed4.csv",
     "candidates": 64,
     "zones": 6,
     "half_side": 500,

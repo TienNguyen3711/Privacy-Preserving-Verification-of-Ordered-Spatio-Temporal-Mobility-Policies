@@ -1,10 +1,10 @@
 query,truth,answer,slot,prove_ms,verify_ms,verifier_decision
-1,true,true,0,1406,1.42,accepted
-2,false,false,1,1441,1.38,accepted
-3,true,true,2,1377,1.36,accepted
-4,false,false,3,1412,1.38,accepted
-5,true,true,4,1375,1.33,accepted
-6,false,false,5,1371,1.35,accepted
+1,true,true,0,1479,1.46,accepted
+2,false,false,1,1526,1.44,accepted
+3,true,true,2,1421,1.41,accepted
+4,false,false,3,1440,1.42,accepted
+5,true,true,4,1446,1.39,accepted
+6,false,false,5,1390,1.39,accepted
 7,true,refused,,,,
 8,true,refused,,,,
 9,true,refused,,,,

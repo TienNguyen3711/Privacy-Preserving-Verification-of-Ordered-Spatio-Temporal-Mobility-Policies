@@ -1,4 +1,4 @@
-wrote /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_wide_long_seed5.csv and /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_wide_long_seed5.json (40 exact finite-pool settings)
+wrote /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_wide_long_seed5.csv and /Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_wide_long_seed5.json (40 exact finite-pool settings)
                 uniform                          visit: F=6, guess=0.0938, ideal bound=0.2500
                 uniform                  visit_ordered: F=6, guess=0.0938, ideal bound=0.2500
                 uniform            visit_ordered_timed: F=6, guess=0.0938, ideal bound=0.2500

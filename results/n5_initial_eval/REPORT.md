@@ -6,7 +6,7 @@
 
 The pools are anchored on the known candidate universe. These are closed-world, finite-pool optima, not held-out population estimates. The rank-skewed prior is hypothetical (weights proportional to 1/rank over sorted candidate IDs), not learned from history. Dwell is excluded because it lacks a circuit.
 
-Completed/replayed runs: 34/35. Recorded settings: 1360. Bound violations: 0. Tree replay checks the semantic answers, branch membership, path budget and terminal guessing reward. Checks also cover nested-pool and budget monotonicity and policy-equivalence ceilings.
+Completed/replayed runs: 35/35. Recorded settings: 1400. Bound violations: 0. Tree replay checks the semantic answers, branch membership, path budget and terminal guessing reward. Checks also cover nested-pool and budget monotonicity and policy-equivalence ceilings.
 
 ## B=4, uniform prior
 
@@ -14,7 +14,7 @@ Values are mean optimal guessing success across completed seeds; brackets show m
 
 | Source / setting | Completed seeds | Visit | + ordering | + relative time | + avoidance |
 |---|---:|---:|---:|---:|---:|
-| synthetic / primary | 4/5 | 12.50% [9.38–14.06] | 25.00% [25.00–25.00] | 25.00% [25.00–25.00] | 25.00% [25.00–25.00] |
+| synthetic / primary | 5/5 | 13.75% [9.38–18.75] | 25.00% [25.00–25.00] | 25.00% [25.00–25.00] | 25.00% [25.00–25.00] |
 | porto / primary | 5/5 | 13.12% [9.38–21.88] | 13.44% [9.38–21.88] | 13.44% [9.38–21.88] | 13.75% [9.38–23.44] |
 | porto / wide_long | 5/5 | 19.06% [14.06–25.00] | 22.19% [18.75–25.00] | 22.19% [18.75–25.00] | 22.50% [18.75–25.00] |
 | geolife / primary | 5/5 | 8.75% [7.81–10.94] | 8.75% [7.81–10.94] | 8.75% [7.81–10.94] | 8.75% [7.81–10.94] |
@@ -39,7 +39,7 @@ Real-data full-pool B=4 uniform success reaches 31.2–100.0% of the ideal bound
 
 With 64 candidates, the chosen skewed prior has p0 approximately 21.08%. The A bound saturates at 1 from B=3, so it gives no nontrivial upper bound there; finite-pool optimisation can remain informative.
 
-Guessing solver time per setting: median 0.000643 s, maximum 9.4807 s. Maximum explored guessing states: 131413. Sum of run wall times (includes replay): 396.77 s. These Python optimisation timings are not cryptographic proving times; runs use a 200,000-state guard and a 120 s process timeout.
+Guessing solver time per setting: median 0.000008 s, maximum 0.0041 s. Maximum explored guessing states: 163. Sum of run wall times (includes replay): 118.77 s. These Python optimisation timings are not cryptographic proving times; runs use a 200,000-state guard and a 120 s process timeout.
 
 ## Interpretation and limits
 
@@ -55,8 +55,3 @@ PYTHONPATH=python python3 -m zkmob.n5_initial_report
 ```
 
 Artifacts: `all_results.csv`, `summary.csv`, `run_status.json`, per-run CSV/JSON/log files, and `primary_curves.png` / `primary_curves.pdf`.
-
-## Incomplete runs
-
-Failed runs are excluded from means, not replaced by approximate optima. The synthetic summary is therefore completion-conditioned and may underrepresent harder instances.
-- synthetic / primary / seed 5: exact search exceeded the 200,000-state guard; see its log.

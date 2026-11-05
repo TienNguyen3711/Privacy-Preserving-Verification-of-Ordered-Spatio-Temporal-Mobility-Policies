@@ -24,10 +24,10 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/synthetic_primary_seed1.csv"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/synthetic_primary_seed1.csv"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 23.459014209
+    "wall_s": 0.31074104199999997
   },
   {
     "source": "synthetic",
@@ -54,10 +54,10 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/synthetic_primary_seed2.csv"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/synthetic_primary_seed2.csv"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 29.614755167000002
+    "wall_s": 0.308184584
   },
   {
     "source": "synthetic",
@@ -84,10 +84,10 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/synthetic_primary_seed3.csv"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/synthetic_primary_seed3.csv"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 53.174963125000005
+    "wall_s": 0.32426629099999993
   },
   {
     "source": "synthetic",
@@ -114,10 +114,10 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/synthetic_primary_seed4.csv"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/synthetic_primary_seed4.csv"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 39.415126916000006
+    "wall_s": 0.299582209
   },
   {
     "source": "synthetic",
@@ -144,11 +144,10 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/synthetic_primary_seed5.csv"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/synthetic_primary_seed5.csv"
     ],
-    "status": "failed",
-    "error": "RuntimeError('runner exit 1; see log')",
-    "wall_s": 21.97798291699999
+    "status": "completed_and_replayed",
+    "wall_s": 0.33489954099999997
   },
   {
     "source": "porto",
@@ -175,12 +174,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_primary_seed1.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_primary_seed1.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.6105372500000215
+    "wall_s": 0.3221602920000002
   },
   {
     "source": "porto",
@@ -207,12 +206,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_primary_seed2.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_primary_seed2.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 1.0876440420000222
+    "wall_s": 0.3526443750000001
   },
   {
     "source": "porto",
@@ -239,12 +238,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_primary_seed3.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_primary_seed3.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 2.287641624999992
+    "wall_s": 0.33216541600000005
   },
   {
     "source": "porto",
@@ -271,12 +270,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_primary_seed4.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_primary_seed4.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.6423541670000077
+    "wall_s": 0.31560762500000017
   },
   {
     "source": "porto",
@@ -303,12 +302,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_primary_seed5.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_primary_seed5.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.5337981659999969
+    "wall_s": 0.30401612499999997
   },
   {
     "source": "porto",
@@ -335,12 +334,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_wide_long_seed1.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_wide_long_seed1.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 1.3272487080000133
+    "wall_s": 0.3859418749999999
   },
   {
     "source": "porto",
@@ -367,12 +366,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_wide_long_seed2.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_wide_long_seed2.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 4.368803084000007
+    "wall_s": 0.6387155
   },
   {
     "source": "porto",
@@ -399,12 +398,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_wide_long_seed3.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_wide_long_seed3.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 14.216528666999977
+    "wall_s": 0.4432276660000003
   },
   {
     "source": "porto",
@@ -431,12 +430,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_wide_long_seed4.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_wide_long_seed4.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 1.2431700840000133
+    "wall_s": 0.4115314579999998
   },
   {
     "source": "porto",
@@ -463,12 +462,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/porto_wide_long_seed5.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/porto_wide_long_seed5.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_porto.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_porto.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 1.588739167
+    "wall_s": 0.44755933400000014
   },
   {
     "source": "geolife",
@@ -495,12 +494,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_primary_seed1.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_primary_seed1.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 28.820923582999995
+    "wall_s": 16.405874959
   },
   {
     "source": "geolife",
@@ -527,12 +526,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_primary_seed2.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_primary_seed2.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 14.551634707999995
+    "wall_s": 8.124984999999999
   },
   {
     "source": "geolife",
@@ -559,12 +558,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_primary_seed3.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_primary_seed3.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 7.448365166000002
+    "wall_s": 4.0886153330000035
   },
   {
     "source": "geolife",
@@ -591,12 +590,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_primary_seed4.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_primary_seed4.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 8.331529791999998
+    "wall_s": 4.537898040999998
   },
   {
     "source": "geolife",
@@ -623,12 +622,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_primary_seed5.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_primary_seed5.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 7.186946458000023
+    "wall_s": 4.205528916999995
   },
   {
     "source": "geolife",
@@ -655,12 +654,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_wide_long_seed1.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_wide_long_seed1.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 31.557000833000018
+    "wall_s": 18.397871125
   },
   {
     "source": "geolife",
@@ -687,12 +686,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_wide_long_seed2.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_wide_long_seed2.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 41.120689124999956
+    "wall_s": 22.430962666
   },
   {
     "source": "geolife",
@@ -719,12 +718,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_wide_long_seed3.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_wide_long_seed3.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 20.36907662499999
+    "wall_s": 11.649825583999998
   },
   {
     "source": "geolife",
@@ -751,12 +750,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_wide_long_seed4.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_wide_long_seed4.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 25.01573612499999
+    "wall_s": 13.922525375000006
   },
   {
     "source": "geolife",
@@ -783,12 +782,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/geolife_wide_long_seed5.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/geolife_wide_long_seed5.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_geolife.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_geolife.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 11.537277958000004
+    "wall_s": 6.496393624999996
   },
   {
     "source": "tdrive",
@@ -815,12 +814,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_primary_seed1.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_primary_seed1.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.4735028750000083
+    "wall_s": 0.2830734590000077
   },
   {
     "source": "tdrive",
@@ -847,12 +846,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_primary_seed2.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_primary_seed2.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.5440094589999944
+    "wall_s": 0.3279739580000012
   },
   {
     "source": "tdrive",
@@ -879,12 +878,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_primary_seed3.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_primary_seed3.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.47958304200000157
+    "wall_s": 0.26540716700000644
   },
   {
     "source": "tdrive",
@@ -911,12 +910,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_primary_seed4.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_primary_seed4.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.4620511660000375
+    "wall_s": 0.28053420800000595
   },
   {
     "source": "tdrive",
@@ -943,12 +942,12 @@
       "--gap",
       "120",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_primary_seed5.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_primary_seed5.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.4740722500000061
+    "wall_s": 0.26259629100000836
   },
   {
     "source": "tdrive",
@@ -975,12 +974,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_wide_long_seed1.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_wide_long_seed1.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.4929021670000111
+    "wall_s": 0.2771958330000075
   },
   {
     "source": "tdrive",
@@ -1007,12 +1006,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_wide_long_seed2.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_wide_long_seed2.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.7182934999999588
+    "wall_s": 0.3946872920000004
   },
   {
     "source": "tdrive",
@@ -1039,12 +1038,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_wide_long_seed3.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_wide_long_seed3.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.5957634590000112
+    "wall_s": 0.27301754199999095
   },
   {
     "source": "tdrive",
@@ -1071,12 +1070,12 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_wide_long_seed4.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_wide_long_seed4.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.5459785420000003
+    "wall_s": 0.3217368330000028
   },
   {
     "source": "tdrive",
@@ -1103,11 +1102,11 @@
       "--gap",
       "900",
       "--out",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/results/n5_initial_eval/tdrive_wide_long_seed5.csv",
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/results/n5_initial_eval/tdrive_wide_long_seed5.csv",
       "--input",
-      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/code/work/n1_tdrive.jsonl"
+      "/Users/tiennguyen/Documents/Deakin/Dr Iynkaran/Paper 3/Codebase/reviews/2026-10-11/numerical-rerun/code/work/n1_tdrive.jsonl"
     ],
     "status": "completed_and_replayed",
-    "wall_s": 0.5007672919999777
+    "wall_s": 0.2958262499999904
   }
 ]
