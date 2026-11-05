@@ -12,7 +12,7 @@ Two B3 discretisations are reported (see rust `automaton.rs`):
 Per item we also find w*, the coarsest width at which B3 is correct at w*
 and at every finer width tried, and report B3's cost at w* versus ours.
 
-    PYTHONPATH=python python3 -m zkmob.n1_report results/n1_real_*.csv
+    PYTHONPATH=python python3 -m zkmob.n1_report
 """
 
 from __future__ import annotations
@@ -122,5 +122,8 @@ def main(paths: List[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:] or sorted(str(p) for p in Path("results").glob("n1_real_*.csv")
-                                if "summary" not in p.name and "wstar" not in p.name))
+    # Use canonical raw inputs only: archived *.before_rr.csv files and
+    # generated summaries may coexist in results/. Explicit paths remain
+    # available for intentional historical analyses.
+    main(sys.argv[1:] or [str(Path("results") / f"n1_real_{dataset}.csv")
+                          for dataset in ("geolife", "porto", "tdrive")])

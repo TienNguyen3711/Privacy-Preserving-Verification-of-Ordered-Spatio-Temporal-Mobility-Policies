@@ -22,6 +22,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import statistics
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -110,12 +111,12 @@ def main():
 
 def summarize(out_csv, levels, cores):
     rows = list(csv.DictReader(open(out_csv)))
-    summary = {'cores': cores, 'levels': []}
+    summary = {'cores': cores, 'n_points': 32, 'median_convention': 'mean of two middle values for even n', 'levels': []}
     for level, busy, parallel in levels:
         ts = sorted(float(r['ready_s']) for r in rows if r['level'] == level)
         n = len(ts)
         entry = {'level': level, 'busy_processes': busy, 'concurrent_provers': parallel, 'n': n,
-                 'median_s': ts[n // 2], 'min_s': ts[0], 'max_s': ts[-1], 'delta': {}}
+                 'median_s': statistics.median(ts), 'min_s': ts[0], 'max_s': ts[-1], 'delta': {}}
         for D in DELTAS:
             k = sum(t > D for t in ts)
             entry['delta'][str(D)] = {'over': k, 'n': n, 'estimate': k / n, 'upper95': upper95(k, n)}
