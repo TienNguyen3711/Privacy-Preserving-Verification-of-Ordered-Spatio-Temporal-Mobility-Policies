@@ -610,3 +610,9 @@ to private test artifacts in copied smoke-test JSON refer to the isolated
 rerun's `code/` directory, where those artifacts remain; they are not
 relocated into the production workspace. Earlier outputs are backed up
 under `../reviews/2026-10-12/rerun-update/before/code/results/`.
+
+## License
+
+The code in this repository is licensed under the Apache License, Version 2.0
+(see [LICENSE](LICENSE)). The GeoLife, T-Drive and Porto datasets are not
+redistributed here and remain under their own licences.
