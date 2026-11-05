@@ -6,11 +6,14 @@ linked by their root.
 Real STARK receipts; each presentation is inspected exactly as a verifier
 sees it (`registry inspect-receipt`: verified journal). Two presentations are
 linked if they share any public value that is not common to all
-presentations (as in the N4 experiment). Writes
-results/global_registry_smoke.json.
+presentations (as in the N4 experiment). Devices generate their own keys;
+the manufacturer only certifies their public keys; the operator publishes
+depth, sorted leaves and root and keeps the admission log private. Writes
+global_registry_smoke.json to --output-dir (default results/).
 
-    python3 python/benchmarks/global_registry_smoke.py
+    python3 python/benchmarks/global_registry_smoke.py [--output-dir DIR]
 """
+import argparse
 import itertools
 import json
 import os
@@ -45,6 +48,10 @@ def linkage(pres):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--output-dir', type=Path, default=ROOT / 'results')
+    output = parser.parse_args().output_dir
+    output.mkdir(parents=True, exist_ok=True)
     if 'RISC0_DEV_MODE' in os.environ:
         raise RuntimeError('unset RISC0_DEV_MODE')
     with tempfile.TemporaryDirectory(prefix='global-registry-', dir=ROOT / 'work') as td:
@@ -52,17 +59,23 @@ def main():
         reg = BIN / 'registry'
         sh(reg, 'manufacturer', '--out', d / 'mfr.secret', '--public', d / 'mfr.pub')
         for i in range(4):
-            sh(reg, 'device', '--manufacturer', d / 'mfr.secret', '--out', d / f'dev{i}.secret',
-               '--request', d / f'dev{i}.req', '--epoch-depth', '10')
+            # on the device / at the manufacturer / back on the device
+            sh(reg, 'device-keygen', '--out', d / f'dev{i}.secret', '--cert-request', d / f'dev{i}.csr',
+               '--epoch-depth', '10')
+            sh(reg, 'certify', '--manufacturer', d / 'mfr.secret', '--cert-request', d / f'dev{i}.csr',
+               '--out', d / f'dev{i}.cert')
+            sh(reg, 'device-enrol', '--device', d / f'dev{i}.secret', '--manufacturer-pub', d / 'mfr.pub',
+               '--cert', d / f'dev{i}.cert', '--request', d / f'dev{i}.req')
         reqs = [d / f'dev{i}.req' for i in range(4)]
         built = json.loads(sh(reg, 'build', '--manufacturer-pub', d / 'mfr.pub', '--depth', '20',
-                              '--out', d / 'registry.json', *reqs))
+                              '--out', d / 'registry.json', '--log', d / 'admissions.json', *reqs))
+        public_fields = sorted(json.loads((d / 'registry.json').read_text()))
         # A forged admission (root changed after signing) is rejected.
         forged = json.loads((d / 'dev0.req').read_text())
         forged['root'][0] ^= 1
         (d / 'forged.req').write_text(json.dumps(forged))
         sh(reg, 'build', '--manufacturer-pub', d / 'mfr.pub', '--depth', '20', '--out', d / 'x.json',
-           d / 'forged.req', ok=False)
+           '--log', d / 'x.log', d / 'forged.req', ok=False)
 
         policies = {
             'yes': {'steps': [{'zone': {'xmin': 0, 'xmax': 4294967295, 'ymin': 0, 'ymax': 4294967295},
@@ -115,13 +128,15 @@ def main():
             'local_control_linkage': l_link, 'local_control_universal_fields': l_universal,
             'device0_next_leaf_after_two_trips': dev0['next_leaf'],
             'forged_admission_rejected': True,
+            'published_registry_fields': public_fields,
         }
         print(json.dumps(result, indent=2))
         assert result['all_global_roots_equal_registry_root'] and result['global_nullifiers_distinct']
         assert all(v[0] == 0 for v in g_link.values() if v[0] is not None)
         assert l_link['same_trip'][0] == 1.0 and l_link['other_device'][0] == 0.0
         assert dev0['next_leaf'] == 2
-        (ROOT / 'results/global_registry_smoke.json').write_text(json.dumps(result, indent=2) + '\n')
+        assert public_fields == ['depth', 'leaves', 'root']
+        (output / 'global_registry_smoke.json').write_text(json.dumps(result, indent=2) + '\n')
 
 
 if __name__ == '__main__':

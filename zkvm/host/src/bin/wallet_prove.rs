@@ -22,7 +22,7 @@
 //! plaintext fixtures without a session file retain the old unscoped API.
 use std::{error::Error, io::Write, path::Path, sync::mpsc, time::Duration};
 use host::{setup_randomized_local, load_trace_nth, wallet::Wallet, vault, anchor::Anchor, H};
-use host::registry::{sign_with_device_file, Registry};
+use host::registry::{sign_with_device_file, PublishedRegistry};
 use methods::{ZKMOB_GUEST_ELF, ZKMOB_GUEST_ID};
 use risc0_zkvm::{default_prover, ExecutorEnv, InnerReceipt, ProverOpts, Receipt};
 use zkmob_core::{check, validate_policy, Journal, Policy, Statement, Witness};
@@ -149,7 +149,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let local = args.iter().any(|s| s == "--local-registry");
         let (signed, note) = match (get("--device"), get("--registry"), local) {
             (Ok(dev_path), Ok(reg_path), false) => {
-                let reg: Registry = serde_json::from_slice(&std::fs::read(reg_path)?)?;
+                let reg: PublishedRegistry = serde_json::from_slice(&std::fs::read(reg_path)?)?;
                 if !reg.verify() { return Err("registry snapshot does not verify".into()); }
                 // Locked read / leaf allocation / durable counter update.
                 (sign_with_device_file(Path::new(dev_path), &reg, traj)?, "initialized wallet in GLOBAL registry (ML-DSA admission)")
@@ -173,7 +173,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         // the one-time-key counter across traces).
         let n: usize = get("--n")?.parse()?;
         let k: usize = get("--trace-index").map(|k| k.parse()).unwrap_or(Ok(0))?;
-        let reg: Registry = serde_json::from_slice(&std::fs::read(get("--registry")?)?)?;
+        let reg: PublishedRegistry = serde_json::from_slice(&std::fs::read(get("--registry")?)?)?;
         if !reg.verify() { return Err("registry snapshot does not verify".into()); }
         let mut wallet = if let Some(key) = &key {
             Wallet::open_protected(path, **key, service()?)?

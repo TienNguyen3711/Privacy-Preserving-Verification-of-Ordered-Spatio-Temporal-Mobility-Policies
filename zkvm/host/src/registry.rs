@@ -1,12 +1,27 @@
 //! Global device registry with ML-DSA admission (paper, Sec. III-C).
 //!
-//! A manufacturer certifies each device's long-term ML-DSA-65 key. A device
-//! derives an epoch subtree of Lamport keys and signs (epoch, epoch root) with
-//! its ML-DSA key. The registry admits a root only after checking the
-//! certificate and that signature, with strictly increasing epochs per device,
-//! and publishes ONE Merkle root over every admitted epoch root. All wallets
-//! enrolled in a registry snapshot share that root, so the root does not
-//! identify a wallet (unlike `setup_randomized_local`, whose root is local).
+//! Key generation happens on the device. `Device::generate` samples the
+//! ML-DSA seed, the epoch seed and the budget key k_D locally; the
+//! manufacturer only ever receives the device's ML-DSA public key
+//! (`CertRequest`) and returns a certificate on it. So the manufacturer cannot
+//! compute k_D or any nullifier H(k_D || V || p || j), and a manufacturer that
+//! colludes with a verifier cannot link presentations.
+//!
+//! A device derives an epoch subtree of Lamport keys and signs (epoch, epoch
+//! root, H(k_D)) with its ML-DSA key. The registry operator admits a root only
+//! after checking the certificate and that signature, with strictly
+//! increasing epochs per device, and keeps the admission log (`Registry`)
+//! private: it links every epoch root to a device key, an epoch number and a
+//! budget tag. Only `PublishedRegistry` is published: the tree depth, the
+//! admitted leaves H(E || H(k_D)) sorted by value, and ONE Merkle root over
+//! them. Sorting hides the admission order inside a snapshot; the leaf count
+//! (the anonymity set) and which leaves are new since the last snapshot stay
+//! public. Auditing the admissions needs the private log, so whoever audits
+//! the registry is a trusted role (paper, threat model).
+//!
+//! All wallets enrolled in a registry snapshot share its root, so the root
+//! does not identify a wallet (unlike `setup_randomized_local`, whose root is
+//! local).
 use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
@@ -73,10 +88,17 @@ pub struct Manufacturer { seed: [u8; 32] }
 impl Manufacturer {
     pub fn generate() -> io::Result<Self> { Ok(Self { seed: random32()? }) }
     pub fn public_key(&self) -> Vec<u8> { vk_bytes(&sk(&self.seed)) }
-    fn certify(&self, device_vk: &[u8]) -> Vec<u8> { sign(&sk(&self.seed), device_vk, CERT_CTX) }
+    /// Certify a device's ML-DSA public key. This is everything the
+    /// manufacturer sees of the device.
+    pub fn certify(&self, req: &CertRequest) -> Vec<u8> { sign(&sk(&self.seed), &req.device_vk, CERT_CTX) }
 }
 
-/// Public admission request for one epoch root.
+/// What a device sends to its manufacturer: its ML-DSA public key only.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct CertRequest { pub device_vk: Vec<u8> }
+
+/// Admission request for one epoch root, sent to the registry operator.
+/// It identifies the device, so the operator keeps it in the private log.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Admission {
     pub device_vk: Vec<u8>,
@@ -100,36 +122,66 @@ pub struct Device {
     pub epoch_depth: usize,
     /// Next unused one-time key of the current epoch; only grows.
     pub next_leaf: u32,
+    /// Manufacturer certificate on the ML-DSA key; empty until installed.
+    #[serde(default)]
     cert: Vec<u8>,
 }
 
 impl Device {
-    /// Factory provisioning: new device key certified by the manufacturer,
-    /// first epoch derived. Returns the device and its admission request.
-    pub fn provision(mfr: &Manufacturer, epoch_depth: usize) -> io::Result<(Self, Admission)> {
+    /// On-device key generation: the ML-DSA seed, the epoch seed and the
+    /// budget key k_D are sampled here and never leave the device. The
+    /// device is uncertified until `install_cert`.
+    pub fn generate(epoch_depth: usize) -> io::Result<Self> {
         if epoch_depth > 16 { return Err(invalid("epoch too large")); }
-        let mldsa_seed = random32()?;
-        let cert = mfr.certify(&vk_bytes(&sk(&mldsa_seed)));
-        let dev = Self { mldsa_seed, epoch_seed: random32()?, dev_key: random32()?, epoch: 1, epoch_depth, next_leaf: 0, cert };
-        let req = dev.admission();
-        Ok((dev, req))
+        Ok(Self { mldsa_seed: random32()?, epoch_seed: random32()?, dev_key: random32()?, epoch: 1, epoch_depth,
+            next_leaf: 0, cert: Vec::new() })
     }
 
-    fn admission(&self) -> Admission {
+    /// The request sent to the manufacturer: the ML-DSA public key only.
+    pub fn cert_request(&self) -> CertRequest { CertRequest { device_vk: vk_bytes(&sk(&self.mldsa_seed)) } }
+
+    /// Install the manufacturer's certificate after checking it.
+    pub fn install_cert(&mut self, manufacturer_vk: &[u8], cert: Vec<u8>) -> io::Result<()> {
+        if !verify(manufacturer_vk, &self.cert_request().device_vk, CERT_CTX, &cert) {
+            return Err(invalid("certificate does not verify for this device key"));
+        }
+        self.cert = cert;
+        Ok(())
+    }
+
+    /// Admission request for the current epoch root; needs a certificate.
+    pub fn admission(&self) -> io::Result<Admission> {
+        if self.cert.is_empty() { return Err(invalid("device not certified")); }
         let key = sk(&self.mldsa_seed);
         let root = Epoch::generate(self.epoch_seed, self.epoch_depth).root();
         let dev_tag = device_tag::<H>(&self.dev_key);
-        Admission { device_vk: vk_bytes(&key), cert: self.cert.clone(), epoch: self.epoch, root, dev_tag,
-            sig: sign(&key, &epoch_msg(self.epoch, &root, &dev_tag), EPOCH_CTX) }
+        Ok(Admission { device_vk: vk_bytes(&key), cert: self.cert.clone(), epoch: self.epoch, root, dev_tag,
+            sig: sign(&key, &epoch_msg(self.epoch, &root, &dev_tag), EPOCH_CTX) })
+    }
+
+    /// Generate, certify and enrol in one call (tests and demos). The
+    /// manufacturer still receives only the `CertRequest`.
+    pub fn provision(mfr: &Manufacturer, epoch_depth: usize) -> io::Result<(Self, Admission)> {
+        let mut dev = Self::generate(epoch_depth)?;
+        let cert = mfr.certify(&dev.cert_request());
+        dev.install_cert(&mfr.public_key(), cert)?;
+        let req = dev.admission()?;
+        Ok((dev, req))
+    }
+
+    /// This device's leaf in the registry for its current epoch root.
+    fn registry_leaf(&self, epoch_root: &Digest) -> Digest {
+        registry_leaf::<H>(epoch_root, &device_tag::<H>(&self.dev_key))
     }
 
     /// Record and sign one trace with the next one-time key, and attach the
     /// registry path of this device's epoch root. The caller must persist the
     /// device (its `next_leaf` grew) BEFORE releasing the returned trace, so
     /// that a one-time key is never used twice.
-    pub fn sign_trace(&mut self, reg: &Registry, traj: Vec<Point>) -> io::Result<SignedTrace> {
+    pub fn sign_trace(&mut self, reg: &PublishedRegistry, traj: Vec<Point>) -> io::Result<SignedTrace> {
         let mut epoch = Epoch::resume(self.epoch_seed, self.epoch_depth, self.next_leaf);
-        let (reg_index, reg_path) = reg.path(&epoch.root()).ok_or_else(|| invalid("epoch root not admitted in this registry"))?;
+        let (reg_index, reg_path) = reg.path(&self.registry_leaf(&epoch.root()))
+            .ok_or_else(|| invalid("epoch root not admitted in this registry"))?;
         if (self.next_leaf as usize) >= 1 << self.epoch_depth { return Err(invalid("epoch exhausted")); }
         let blind = random32()?;
         let c = commit::<H>(&traj, &blind);
@@ -145,7 +197,7 @@ impl Device {
 /// persisted, so concurrent or crashed callers never reuse a one-time key.
 /// (A restored backup of the device file can still roll the counter back;
 /// that is a device trust assumption, not protected by the wallet ledger.)
-pub fn sign_with_device_file(path: &Path, reg: &Registry, traj: Vec<Point>) -> io::Result<SignedTrace> {
+pub fn sign_with_device_file(path: &Path, reg: &PublishedRegistry, traj: Vec<Point>) -> io::Result<SignedTrace> {
     let lock = OpenOptions::new().read(true).write(true).create(true).mode(0o600).open(path.with_extension("lock"))?;
     lock.lock()?;
     let mut dev: Device = serde_json::from_slice(&fs::read(path)?).map_err(|_| invalid("corrupt device file"))?;
@@ -155,9 +207,44 @@ pub fn sign_with_device_file(path: &Path, reg: &Registry, traj: Vec<Point>) -> i
     Ok(signed)
 }
 
-/// Published registry snapshot: admitted epoch roots and their Merkle root.
+/// The registry operator's PRIVATE admission log for one snapshot. It links
+/// each epoch root to a device key, an epoch number and a budget tag, so it is
+/// never published; `publish` gives the public view.
 #[derive(Serialize, Deserialize)]
 pub struct Registry { pub manufacturer_vk: Vec<u8>, pub depth: usize, pub admissions: Vec<Admission>, pub root: Digest }
+
+/// The PUBLIC registry snapshot: tree depth, admitted leaves H(E || H(k_D))
+/// sorted by value, and their Merkle root. No device key, epoch number or
+/// budget tag appears here.
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PublishedRegistry { pub depth: usize, pub leaves: Vec<Digest>, pub root: Digest }
+
+impl PublishedRegistry {
+    /// Public consistency check: leaves strictly sorted, they fit the tree,
+    /// and the root is their Merkle root. (Whether each leaf was admitted
+    /// correctly can only be checked with the private log.)
+    pub fn verify(&self) -> bool {
+        self.depth <= 31 && self.leaves.len() <= 1usize << self.depth
+            && self.leaves.windows(2).all(|w| w[0] < w[1])
+            && Tree::new(self.depth, self.leaves.clone()).root() == self.root
+    }
+
+    /// Merkle path of a leaf the caller computed itself (a device knows its
+    /// epoch root and budget tag).
+    pub fn path(&self, leaf: &Digest) -> Option<(u32, Vec<Digest>)> {
+        let i = self.leaves.binary_search(leaf).ok()?;
+        Some((i as u32, Tree::new(self.depth, self.leaves.clone()).path(i)))
+    }
+}
+
+/// Registry leaves in published order: sorted by value, which hides the
+/// admission order inside a snapshot.
+fn sorted_leaves(admissions: &[Admission]) -> Vec<Digest> {
+    let mut leaves: Vec<Digest> = admissions.iter().map(|a| registry_leaf::<H>(&a.root, &a.dev_tag)).collect();
+    leaves.sort();
+    leaves
+}
 
 impl Registry {
     /// Admit requests in order. Rejects a bad certificate, a bad epoch
@@ -178,18 +265,18 @@ impl Registry {
             if !roots.insert(r.root) { return Err(invalid("duplicate epoch root")); }
             last.insert(r.device_vk.clone(), r.epoch);
         }
-        let root = Tree::new(depth, requests.iter().map(|r| registry_leaf::<H>(&r.root, &r.dev_tag)).collect()).root();
+        let root = Tree::new(depth, sorted_leaves(&requests)).root();
         Ok(Self { manufacturer_vk, depth, admissions: requests, root })
     }
 
-    /// Recheck every admission and the published root (e.g. by a verifier).
+    /// Recheck every admission and the root (an auditor holding the log).
     pub fn verify(&self) -> bool {
         Self::build(self.manufacturer_vk.clone(), self.depth, self.admissions.clone()).is_ok_and(|r| r.root == self.root)
     }
 
-    pub fn path(&self, epoch_root: &Digest) -> Option<(u32, Vec<Digest>)> {
-        let i = self.admissions.iter().position(|a| &a.root == epoch_root)?;
-        Some((i as u32, Tree::new(self.depth, self.admissions.iter().map(|a| registry_leaf::<H>(&a.root, &a.dev_tag)).collect()).path(i)))
+    /// The public view of this snapshot.
+    pub fn publish(&self) -> PublishedRegistry {
+        PublishedRegistry { depth: self.depth, leaves: sorted_leaves(&self.admissions), root: self.root }
     }
 }
 
@@ -205,7 +292,9 @@ mod tests {
         let mfr = Manufacturer::generate().unwrap();
         let (mut a, ra) = Device::provision(&mfr, 3).unwrap();
         let (mut b, rb) = Device::provision(&mfr, 3).unwrap();
-        let reg = Registry::build(mfr.public_key(), 8, vec![ra, rb]).unwrap();
+        let log = Registry::build(mfr.public_key(), 8, vec![ra, rb]).unwrap();
+        assert!(log.verify());
+        let reg = log.publish();
         assert!(reg.verify());
         let (sa, sb) = (a.sign_trace(&reg, traj()).unwrap(), b.sign_trace(&reg, traj()).unwrap());
         assert_eq!(sa.reg_root, sb.reg_root, "one global root");
@@ -237,8 +326,63 @@ mod tests {
         assert!(Registry::build(mfr.public_key(), 4, vec![r.clone(), r.clone()]).is_err(), "duplicate root");
         assert!(Registry::build(mfr.public_key(), 4, vec![r.clone(), replay]).is_err(), "forged second epoch");
         let unknown = Device::provision(&mfr, 2).unwrap().0;
-        let reg = Registry::build(mfr.public_key(), 4, vec![r]).unwrap();
+        let reg = Registry::build(mfr.public_key(), 4, vec![r]).unwrap().publish();
         let mut unknown = unknown;
         assert!(unknown.sign_trace(&reg, traj()).is_err(), "device not admitted");
+    }
+
+    #[test]
+    fn manufacturer_sees_only_the_device_public_key() {
+        let mfr = Manufacturer::generate().unwrap();
+        let mut dev = Device::generate(3).unwrap();
+        // The request carries the ML-DSA public key and nothing else.
+        let req = serde_json::to_value(dev.cert_request()).unwrap();
+        assert_eq!(req.as_object().unwrap().keys().collect::<Vec<_>>(), ["device_vk"]);
+        assert!(dev.admission().is_err(), "an uncertified device cannot enrol");
+        // A certificate from another manufacturer, or for another key, is refused.
+        let other = Manufacturer::generate().unwrap();
+        assert!(dev.install_cert(&mfr.public_key(), other.certify(&dev.cert_request())).is_err());
+        let stranger = Device::generate(3).unwrap();
+        assert!(dev.install_cert(&mfr.public_key(), mfr.certify(&stranger.cert_request())).is_err());
+        dev.install_cert(&mfr.public_key(), mfr.certify(&dev.cert_request())).unwrap();
+        let reg = Registry::build(mfr.public_key(), 4, vec![dev.admission().unwrap()]).unwrap().publish();
+        assert!(dev.sign_trace(&reg, traj()).is_ok());
+    }
+
+    #[test]
+    fn published_view_hides_device_identity_and_admission_order() {
+        let mfr = Manufacturer::generate().unwrap();
+        let reqs: Vec<Admission> = (0..5).map(|_| Device::provision(&mfr, 2).unwrap().1).collect();
+        let log = Registry::build(mfr.public_key(), 4, reqs.clone()).unwrap();
+        let reg = log.publish();
+        // Only depth, sorted leaves and root are public.
+        let v = serde_json::to_value(&reg).unwrap();
+        let mut keys: Vec<_> = v.as_object().unwrap().keys().cloned().collect();
+        keys.sort();
+        assert_eq!(keys, ["depth", "leaves", "root"]);
+        let text = serde_json::to_string(&reg).unwrap();
+        for r in &reqs {
+            for secret in [serde_json::to_string(&r.dev_tag).unwrap(), serde_json::to_string(&r.root).unwrap()] {
+                assert!(!text.contains(secret.trim_matches(|c| c == '[' || c == ']')), "tag or epoch root published");
+            }
+        }
+        assert_eq!(reg.root, log.root);
+        assert!(reg.verify());
+        // Admission order does not change the published snapshot.
+        let mut reversed = reqs;
+        reversed.reverse();
+        let reg2 = Registry::build(mfr.public_key(), 4, reversed).unwrap().publish();
+        assert_eq!((reg2.root, &reg2.leaves), (reg.root, &reg.leaves));
+        // A tampered public view fails its consistency check, and an
+        // extra field (e.g. re-added admissions) is rejected on parsing.
+        let mut bad = reg.clone();
+        bad.leaves.swap(0, 1);
+        assert!(!bad.verify(), "unsorted leaves");
+        let mut bad = reg.clone();
+        bad.leaves[0][0] ^= 1;
+        assert!(!bad.verify(), "root does not match the leaves");
+        let mut extra = v;
+        extra["admissions"] = serde_json::json!([]);
+        assert!(serde_json::from_value::<PublishedRegistry>(extra).is_err());
     }
 }

@@ -145,10 +145,29 @@ The historical proof-time measurements predate this host-side change; the
 proof relation, witness and journal are unchanged. Namespace storage tests
 use opaque cached bytes and do not certify cryptographic unlinkability.
 
-Global registry (`registry` binary, `host/src/registry.rs`): a manufacturer
-ML-DSA key certifies device keys; devices sign (epoch, epoch root); the
-registry checks both and publishes one Merkle root for all devices. Initialise
-with `--device dev.secret --registry registry.json [--trace-index k]`. Leaf
+Global registry (`registry` binary, `host/src/registry.rs`). Each step runs
+on one party, and secrets never cross:
+
+```
+registry manufacturer  --out mfr.secret --public mfr.pub                      # manufacturer
+registry device-keygen --out dev.secret --cert-request dev.csr               # device
+registry certify       --manufacturer mfr.secret --cert-request dev.csr --out dev.cert   # manufacturer
+registry device-enrol  --device dev.secret --manufacturer-pub mfr.pub --cert dev.cert --request dev.req   # device
+registry build         --manufacturer-pub mfr.pub --depth 20 --out registry.json --log admissions.json dev*.req   # operator
+```
+
+The device generates its ML-DSA seed, epoch seed and budget key k_D itself;
+the manufacturer sees only the ML-DSA public key in `dev.csr`, so it cannot
+compute nullifiers. Devices sign (epoch, epoch root, H(k_D)); the operator
+checks the certificate and that signature, writes its admission log to
+`admissions.json` (mode 0600, private: it links roots to device keys, epochs
+and budget tags), and publishes only `registry.json` = depth, leaves sorted by
+value, and the Merkle root. Sorting hides admission order within a snapshot;
+the leaf count and which leaves are new since the previous snapshot remain
+public. Wallets check only that the root matches the sorted leaves; auditing
+admissions needs the private log. The old one-step `registry device` command,
+in which the manufacturer generated the device keys, now fails.
+Initialise a wallet with `--device dev.secret --registry registry.json [--trace-index k]`. Leaf
 allocation holds an exclusive lock on `dev.lock` across read, signing and the
 durable counter write (unique staging files), so concurrent initialisations
 never reuse a one-time key (`tests/registry_cli.rs`: 16 enrolments, 8 of them
