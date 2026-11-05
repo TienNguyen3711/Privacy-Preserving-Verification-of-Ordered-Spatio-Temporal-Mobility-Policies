@@ -38,7 +38,7 @@ def main():
         time.sleep(KILL_AT_S)
         assert child.poll() is None, 'first process ended before the deadline'
         state = json.loads((wallet / 'state.json').read_text())
-        req = state['scopes']['01' * 32]['requests']['r']
+        req = state['scopes']['01' * 32 + '/0']['requests']['r']
         stored_before_kill = req['response'] is not None
         child.kill()
         first_out, _ = child.communicate()

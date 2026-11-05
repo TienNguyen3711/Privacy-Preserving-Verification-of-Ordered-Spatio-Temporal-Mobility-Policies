@@ -51,8 +51,8 @@ def main():
     run('cap_increase_rejected', query('yes', 'r3') + ['--budget', '3'], success=False)
     run('reinitialization_rejected', ['--init', '--traces', str(ROOT/'work/n1_geolife.jsonl'), '--n', '32', '--budget', '99', '--latency-ms', '0', '--local-registry'], success=False)
     data = json.loads((wallet/'state.json').read_text())
-    assert data['budget'] == 2 and data['scopes'][v]['next'] == 2
-    requests = data['scopes'][v]['requests']
+    assert data['budget'] == 2 and data['scopes'][v + '/0']['next'] == 2
+    requests = data['scopes'][v + '/0']['requests']
     # Wallet v4: the state commits to each receipt's SHA-256; bytes live in receipts/.
     for rid, expected in (('r1', first), ('r2', second)):
         digest = requests[rid]['response']
